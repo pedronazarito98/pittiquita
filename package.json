@@ -1,6 +1,6 @@
 {
   "name": "pittiquita",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "React toolkit for capturing HTML components to Figma via the HTML to Design plugin",
   "type": "module",
   "author": {
