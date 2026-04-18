@@ -1,8 +1,26 @@
 {
   "name": "pittiquita",
-  "version": "0.0.1",
-  "description": "React toolkit for capturing HTML components to Figma",
+  "version": "0.1.0",
+  "description": "React toolkit for capturing HTML components to Figma via the HTML to Design plugin",
   "type": "module",
+  "author": {
+    "name": "Pedro Nazarito"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pedronazarito98/pittiquita.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pedronazarito98/pittiquita/issues"
+  },
+  "homepage": "https://github.com/pedronazarito98/pittiquita#readme",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
