@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/logo.svg" width="120" alt="pittiquita logo" />
+  <img src="./docs/logo.svg" width="120" alt="pittiquita logo" />
   <h1>pittiquita</h1>
   <p><strong>Manda seus componentes React direto pro Figma — um clique, sem copy-paste, sem ginástica no DevTools.</strong></p>
   <p>
