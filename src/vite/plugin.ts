@@ -1,0 +1,59 @@
+import type { Plugin } from 'vite'
+
+import type { FigmaCapturePanelProps } from '../react/FigmaCapturePanel'
+
+type PittiquitaViteOptions = Omit<FigmaCapturePanelProps, 'pathname' | 'searchKey'>
+
+const VIRTUAL_MODULE_ID = 'virtual:pittiquita'
+const RESOLVED_VIRTUAL_MODULE_ID = '\0' + VIRTUAL_MODULE_ID
+
+/**
+ * Plugin Vite que injeta automaticamente o <FigmaCapturePanel>
+ * em mode development. Zero overhead em produção.
+ */
+export function pittiquita(options: PittiquitaViteOptions = {}): Plugin {
+  return {
+    name: 'pittiquita',
+    apply: 'serve', // só em dev
+
+    resolveId(id) {
+      if (id === VIRTUAL_MODULE_ID) return RESOLVED_VIRTUAL_MODULE_ID
+    },
+
+    load(id) {
+      if (id !== RESOLVED_VIRTUAL_MODULE_ID) return
+
+      const propsJson = JSON.stringify(options, (_, value) => {
+        // funções (como regionsCount) não serializam; usar defaults
+        if (typeof value === 'function') return undefined
+        return value
+      })
+        // U+2028 / U+2029 são válidos em JSON, mas quebram parsers JS antigos.
+        .replace(/\u2028/g, '\\u2028')
+        .replace(/\u2029/g, '\\u2029')
+
+      return `
+        import { createElement } from 'react'
+        import { createRoot } from 'react-dom/client'
+        import { FigmaCapturePanel } from 'pittiquita'
+
+        const container = document.createElement('div')
+        container.id = 'pittiquita-root'
+        document.body.appendChild(container)
+
+        const root = createRoot(container)
+        root.render(createElement(FigmaCapturePanel, ${propsJson}))
+      `
+    },
+
+    transformIndexHtml() {
+      return [
+        {
+          tag: 'script',
+          attrs: { type: 'module', src: VIRTUAL_MODULE_ID },
+          injectTo: 'body',
+        },
+      ]
+    },
+  }
+}

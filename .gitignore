@@ -1,0 +1,25 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# coverage & test artefacts
+coverage/
+.vitest-cache/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
