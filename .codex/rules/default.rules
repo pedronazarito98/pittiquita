@@ -1,0 +1,42 @@
+# Regras locais do Codex para pittiquita.
+# Elas controlam comandos pedidos fora do sandbox depois que a camada `.codex/` do projeto e confiada.
+
+# `rm` pode apagar trabalho local; sempre exige confirmacao explicita.
+prefix_rule(
+  pattern = ["rm"],
+  decision = "prompt",
+  justification = "Deletes destrutivos exigem confirmacao explicita do usuario neste repositorio.",
+  match = ["rm -rf dist", "rm README.md"],
+)
+
+# `git push` publica alteracoes fora da maquina local; nao deve ser automatico.
+prefix_rule(
+  pattern = ["git", "push"],
+  decision = "prompt",
+  justification = "Push de alteracoes exige confirmacao explicita do usuario.",
+  match = ["git push", "git push origin main"],
+)
+
+# `terraform apply` altera infraestrutura; exige decisao humana.
+prefix_rule(
+  pattern = ["terraform", "apply"],
+  decision = "prompt",
+  justification = "Alteracoes de infraestrutura exigem confirmacao explicita do usuario.",
+  match = ["terraform apply", "terraform apply -auto-approve"],
+)
+
+# `chmod` altera permissoes de arquivos; precisa de revisao antes de executar.
+prefix_rule(
+  pattern = ["chmod"],
+  decision = "prompt",
+  justification = "Mudancas de permissao exigem revisao antes da execucao.",
+  match = ["chmod +x script.sh", "chmod -R 777 ."],
+)
+
+# `chown` altera dono/grupo de arquivos; pode quebrar o workspace.
+prefix_rule(
+  pattern = ["chown"],
+  decision = "prompt",
+  justification = "Mudancas de dono ou grupo exigem revisao antes da execucao.",
+  match = ["chown user file", "chown -R user:group ."],
+)

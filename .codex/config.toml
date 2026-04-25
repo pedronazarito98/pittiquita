@@ -1,0 +1,60 @@
+# Configuracao do Codex escopada ao projeto pittiquita.
+# Esta camada so carrega depois que o projeto e marcado como confiavel no Codex.
+
+# Modelo padrao usado nas sessoes deste repositorio.
+model = "gpt-5.5"
+model_provider = "openai"
+
+# Aumenta a profundidade de raciocinio para tarefas de codigo e revisao.
+model_reasoning_effort = "high"
+
+# Mantem respostas objetivas sem perder detalhes importantes.
+model_verbosity = "medium"
+
+# Mantem produtividade com escrita no workspace, mas ainda permite pedir aprovacao para comandos arriscados.
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+# Limite de bytes de instrucoes de projeto que entram no prompt inicial.
+project_doc_max_bytes = 32768
+
+# Fallback usado se algum nivel nao tiver AGENTS.md.
+project_doc_fallback_filenames = [
+  ".github/copilot-instructions.md",
+]
+
+[features]
+# Ativa hooks, subagentes e snapshot de shell para um fluxo mais consistente.
+codex_hooks = true
+multi_agent = true
+shell_snapshot = true
+
+[agents]
+# Controla fan-out de subagentes para evitar custo e ruido excessivos.
+max_threads = 6
+max_depth = 1
+job_max_runtime_seconds = 1800
+
+[mcp_servers.openaiDeveloperDocs]
+# MCP oficial da OpenAI para consultar documentacao atual de API, Codex, MCP e modelos.
+url = "https://developers.openai.com/mcp"
+startup_timeout_sec = 10
+tool_timeout_sec = 60
+
+[agents.pittiquita_explorer]
+# Agente de leitura para mapear arquitetura, testes e contratos antes de implementar.
+description = "Explorador somente leitura para mapear arquitetura, testes e contratos de API publica do pittiquita."
+config_file = "./agents/pittiquita-explorer.toml"
+nickname_candidates = ["Map", "Trace", "Lens"]
+
+[agents.pittiquita_reviewer]
+# Agente de revisao para encontrar riscos antes de aceitar uma mudanca.
+description = "Revisor focado em corretude, estabilidade da API publica, garantias dev-only e testes ausentes."
+config_file = "./agents/pittiquita-reviewer.toml"
+nickname_candidates = ["Review", "Guard", "Check"]
+
+[agents.docs_researcher]
+# Agente de pesquisa para buscar fontes atuais sem misturar isso com implementacao.
+description = "Pesquisador de documentacao atual para OpenAI, Codex, MCP, Figma, React, Vite e TypeScript."
+config_file = "./agents/docs-researcher.toml"
+nickname_candidates = ["Docs", "Source", "Cite"]
