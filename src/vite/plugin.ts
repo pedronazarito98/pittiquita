@@ -2,14 +2,16 @@ import type { Plugin } from 'vite'
 
 import type { FigmaCapturePanelProps } from '../react/FigmaCapturePanel'
 
+/** Opções aceitas pelo plugin Vite sem os campos derivados da rota atual. */
 type PittiquitaViteOptions = Omit<FigmaCapturePanelProps, 'pathname' | 'searchKey'>
 
 const VIRTUAL_MODULE_ID = 'virtual:pittiquita'
 const RESOLVED_VIRTUAL_MODULE_ID = '\0' + VIRTUAL_MODULE_ID
+const VIRTUAL_MODULE_PUBLIC_PATH = `/@id/__x00__${VIRTUAL_MODULE_ID}`
 
 /**
  * Plugin Vite que injeta automaticamente o <FigmaCapturePanel>
- * em mode development. Zero overhead em produção.
+ * em modo de desenvolvimento. Zero overhead em produção.
  */
 export function pittiquita(options: PittiquitaViteOptions = {}): Plugin {
   return {
@@ -35,14 +37,22 @@ export function pittiquita(options: PittiquitaViteOptions = {}): Plugin {
       return `
         import { createElement } from 'react'
         import { createRoot } from 'react-dom/client'
+        import 'pittiquita/styles.css'
         import { FigmaCapturePanel } from 'pittiquita'
 
-        const container = document.createElement('div')
-        container.id = 'pittiquita-root'
-        document.body.appendChild(container)
+        const mountPanel = () => {
+          if (document.querySelector('[data-figma-helper="true"]')) return
+          if (document.getElementById('pittiquita-root')) return
 
-        const root = createRoot(container)
-        root.render(createElement(FigmaCapturePanel, ${propsJson}))
+          const container = document.createElement('div')
+          container.id = 'pittiquita-root'
+          document.body.appendChild(container)
+
+          const root = createRoot(container)
+          root.render(createElement(FigmaCapturePanel, ${propsJson}))
+        }
+
+        requestAnimationFrame(mountPanel)
       `
     },
 
@@ -50,7 +60,7 @@ export function pittiquita(options: PittiquitaViteOptions = {}): Plugin {
       return [
         {
           tag: 'script',
-          attrs: { type: 'module', src: VIRTUAL_MODULE_ID },
+          attrs: { type: 'module', src: VIRTUAL_MODULE_PUBLIC_PATH },
           injectTo: 'body',
         },
       ]

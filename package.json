@@ -64,15 +64,21 @@
         "types": "./dist/vite.d.cts",
         "default": "./dist/vite.cjs"
       }
-    }
+    },
+    "./styles.css": "./dist/styles.css"
   },
   "files": [
     "dist"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/styles.css"
+  ],
   "scripts": {
-    "build": "tsup",
+    "build": "pnpm panda:codegen && tsup && pnpm panda:css",
     "dev": "tsup --watch",
+    "prepare": "panda codegen",
+    "panda:codegen": "panda codegen",
+    "panda:css": "panda cssgen --outfile dist/styles.css",
     "test": "vitest",
     "test:run": "vitest run",
     "lint": "eslint src/",
@@ -92,6 +98,7 @@
     }
   },
   "devDependencies": {
+    "@pandacss/dev": "^1.10.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

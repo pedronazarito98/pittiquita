@@ -1,5 +1,6 @@
 node_modules/
 dist/
+src/styled-system/
 *.tsbuildinfo
 .DS_Store
 
@@ -11,6 +12,8 @@ dist/
 # coverage & test artefacts
 coverage/
 .vitest-cache/
+.playwright-mcp/
+pittiquita-*.png
 
 # IDE / editor
 .vscode/

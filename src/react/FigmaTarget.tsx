@@ -3,9 +3,13 @@ import { createElement, type ElementType, type ReactNode } from 'react'
 import { prettifyLabel } from '../core/utils/regions'
 
 export type FigmaTargetProps = {
+  /** Nome técnico usado no atributo `data-figma-target`. */
   name: string
+  /** Label legível exibida no painel; quando ausente, deriva de `name`. */
   label?: string
+  /** Elemento renderizado pelo wrapper sem alterar os data-attributes. */
   as?: ElementType
+  /** Conteúdo da região que será marcada para captura. */
   children: ReactNode
 }
 
@@ -32,7 +36,7 @@ export function FigmaTarget({
  * Retorna data-attributes para marcar um elemento sem wrapper extra.
  *
  * @example
- * <div {...figmaTarget('kpi-header', { label: 'KPI Header' })}>
+ * <div {...figmaTarget('cabecalho-kpi', { label: 'Cabeçalho KPI' })}>
  */
 export function figmaTarget(
   name: string,

@@ -54,5 +54,12 @@ describe('FigmaCapturePanel', () => {
     render(<FigmaCapturePanel theme={{ accentColor: '#ff0000' }} />)
     const panel = screen.getByText('Figma Capture').closest('[data-figma-helper]') as HTMLElement
     expect(panel.style.getPropertyValue('--pittiquita-accent')).toBe('#ff0000')
+    expect(panel.style.getPropertyValue('--pq-colors-accent-solid')).toBe('#ff0000')
+  })
+
+  it('applies explicit color mode', () => {
+    render(<FigmaCapturePanel colorMode="dark" />)
+    const panel = screen.getByText('Figma Capture').closest('[data-figma-helper]') as HTMLElement
+    expect(panel.dataset.pittiquitaColorMode).toBe('dark')
   })
 })
