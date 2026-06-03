@@ -6,6 +6,7 @@
   <a href="https://www.npmjs.com/package/pittiquita"><img alt="npm version" src="https://img.shields.io/npm/v/pittiquita?style=flat-square" /></a>
   <a href="https://www.npmjs.com/package/pittiquita"><img alt="npm downloads" src="https://img.shields.io/npm/dm/pittiquita?style=flat-square" /></a>
   <a href="https://github.com/pedronazarito98/pittiquita/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/npm/l/pittiquita?style=flat-square" /></a>
+  <a href="https://github.com/pedronazarito98/pittiquita/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/pedronazarito98/pittiquita/actions/workflows/ci.yml/badge.svg" /></a>
   <a href="https://bundlephobia.com/package/pittiquita"><img alt="bundle size" src="https://img.shields.io/bundlephobia/minzip/pittiquita?style=flat-square" /></a>
 </p>
 
@@ -17,8 +18,10 @@ It is SSR-safe, localhost-only, tree-shakeable, and designed to have zero produc
 
 - npm: [pittiquita](https://www.npmjs.com/package/pittiquita)
 - GitHub: [pedronazarito98/pittiquita](https://github.com/pedronazarito98/pittiquita)
-- License: [MIT](./LICENSE)
-- Visual demo: [docs/demo](./docs/demo)
+- Issues: [GitHub Issues](https://github.com/pedronazarito98/pittiquita/issues)
+- License: [MIT](https://github.com/pedronazarito98/pittiquita/blob/main/LICENSE)
+- Visual demo: [docs/demo](https://github.com/pedronazarito98/pittiquita/tree/main/docs/demo)
+- Release: [docs/release.md](https://github.com/pedronazarito98/pittiquita/blob/main/docs/release.md)
 
 ## Visual Demo
 
@@ -30,11 +33,11 @@ localhost -> activate capture -> URL ready -> paste in Figma / HTML to Design
 
 | Localhost panel | Capture active |
 | --- | --- |
-| ![pittiquita panel on localhost](./docs/demo/01-localhost-panel.png) | ![pittiquita capture active](./docs/demo/02-capture-active.png) |
+| ![pittiquita panel on localhost](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/01-localhost-panel.png) | ![pittiquita capture active](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/02-capture-active.png) |
 
 | Copy URL | HTML to Design step |
 | --- | --- |
-| ![pittiquita capture URL ready](./docs/demo/03-copy-url.png) | ![illustrative HTML to Design import step](./docs/demo/04-figma-import-step.png) |
+| ![pittiquita capture URL ready](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/03-copy-url.png) | ![illustrative HTML to Design import step](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/04-figma-import-step.png) |
 
 The last screen is an illustrative local mock. It documents where to paste the URL in HTML to Design without requiring a Figma login or plugin session.
 
@@ -302,6 +305,8 @@ pnpm test:run
 pnpm typecheck
 pnpm build
 pnpm lint
+pnpm validate
+pnpm pack:check
 pnpm run demo:capture
 pnpm --dir playground dev
 pnpm --dir playground build
@@ -317,7 +322,7 @@ The package is published as ESM and CJS through `tsup`.
 - `module`: `./dist/index.js`
 - `types`: `./dist/index.d.ts`
 - `exports`: `.`, `./hooks`, `./vite`, `./next`
-- `files`: `dist`
+- `files`: `dist`, `README.md`, `LICENSE`
 - `sideEffects`: `false`
 - `license`: `MIT`
 
@@ -348,4 +353,4 @@ The package is published as ESM and CJS through `tsup`.
 
 ## License
 
-MIT (c) Pedro Nazarito. See [LICENSE](./LICENSE).
+MIT (c) Pedro Nazarito. See [LICENSE](https://github.com/pedronazarito98/pittiquita/blob/main/LICENSE).

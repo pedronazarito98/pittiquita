@@ -6,10 +6,11 @@
   <a href="https://www.npmjs.com/package/pittiquita"><img alt="versao no npm" src="https://img.shields.io/npm/v/pittiquita?style=flat-square" /></a>
   <a href="https://www.npmjs.com/package/pittiquita"><img alt="downloads no npm" src="https://img.shields.io/npm/dm/pittiquita?style=flat-square" /></a>
   <a href="https://github.com/pedronazarito98/pittiquita/blob/main/LICENSE"><img alt="licenca" src="https://img.shields.io/npm/l/pittiquita?style=flat-square" /></a>
+  <a href="https://github.com/pedronazarito98/pittiquita/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/pedronazarito98/pittiquita/actions/workflows/ci.yml/badge.svg" /></a>
   <a href="https://bundlephobia.com/package/pittiquita"><img alt="tamanho do bundle" src="https://img.shields.io/bundlephobia/minzip/pittiquita?style=flat-square" /></a>
 </p>
 
-**Idioma:** Portugues (padrao) | [English](https://github.com/pedronazarito98/pittiquita/blob/main/README.en.md)
+**Idioma:** Portugues (padrao) | [English](https://github.com/pedronazarito98/pittiquita/blob/main/docs/README.en.md)
 
 `pittiquita` acelera o fluxo Design <-> Code. Ele adiciona um pequeno painel de captura em apps React locais, permite marcar regioes uteis da pagina e prepara a URL atual do localhost para uso no plugin [HTML to Design](https://www.figma.com/community/plugin/1159123024924461424/html-to-design) do Figma.
 
@@ -17,8 +18,10 @@ Ele e seguro para SSR, roda apenas em localhost, e tree-shakeable e foi desenhad
 
 - npm: [pittiquita](https://www.npmjs.com/package/pittiquita)
 - GitHub: [pedronazarito98/pittiquita](https://github.com/pedronazarito98/pittiquita)
+- Issues: [GitHub Issues](https://github.com/pedronazarito98/pittiquita/issues)
 - Licenca: [MIT](./LICENSE)
-- Demo visual: [docs/demo](./docs/demo)
+- Demo visual: [docs/demo](https://github.com/pedronazarito98/pittiquita/tree/main/docs/demo)
+- Release: [docs/release.md](https://github.com/pedronazarito98/pittiquita/blob/main/docs/release.md)
 
 ## Demo Visual
 
@@ -30,11 +33,11 @@ localhost -> ativar captura -> URL pronta -> colar no Figma / HTML to Design
 
 | Painel no localhost | Captura ativa |
 | --- | --- |
-| ![painel do pittiquita no localhost](./docs/demo/01-localhost-panel.png) | ![captura ativa no pittiquita](./docs/demo/02-capture-active.png) |
+| ![painel do pittiquita no localhost](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/01-localhost-panel.png) | ![captura ativa no pittiquita](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/02-capture-active.png) |
 
 | Copiar URL | Passo no HTML to Design |
 | --- | --- |
-| ![URL de captura pronta no pittiquita](./docs/demo/03-copy-url.png) | ![passo ilustrativo de importacao no HTML to Design](./docs/demo/04-figma-import-step.png) |
+| ![URL de captura pronta no pittiquita](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/03-copy-url.png) | ![passo ilustrativo de importacao no HTML to Design](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/04-figma-import-step.png) |
 
 A ultima tela e um mock local ilustrativo. Ela documenta onde colar a URL no HTML to Design sem exigir login no Figma ou uma sessao real do plugin.
 
@@ -302,6 +305,8 @@ pnpm test:run
 pnpm typecheck
 pnpm build
 pnpm lint
+pnpm validate
+pnpm pack:check
 pnpm run demo:capture
 pnpm --dir playground dev
 pnpm --dir playground build
@@ -317,7 +322,7 @@ O pacote e publicado como ESM e CJS via `tsup`.
 - `module`: `./dist/index.js`
 - `types`: `./dist/index.d.ts`
 - `exports`: `.`, `./hooks`, `./vite`, `./next`
-- `files`: `dist`
+- `files`: `dist`, `README.md`, `LICENSE`
 - `sideEffects`: `false`
 - `license`: `MIT`
 
