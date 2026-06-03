@@ -67,7 +67,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "docs/demo"
   ],
   "sideEffects": false,
   "scripts": {

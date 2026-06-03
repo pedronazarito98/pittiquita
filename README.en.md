@@ -30,11 +30,11 @@ localhost -> activate capture -> URL ready -> paste in Figma / HTML to Design
 
 | Localhost panel | Capture active |
 | --- | --- |
-| ![pittiquita panel on localhost](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/01-localhost-panel.png) | ![pittiquita capture active](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/02-capture-active.png) |
+| ![pittiquita panel on localhost](./docs/demo/01-localhost-panel.png) | ![pittiquita capture active](./docs/demo/02-capture-active.png) |
 
 | Copy URL | HTML to Design step |
 | --- | --- |
-| ![pittiquita capture URL ready](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/03-copy-url.png) | ![illustrative HTML to Design import step](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/04-figma-import-step.png) |
+| ![pittiquita capture URL ready](./docs/demo/03-copy-url.png) | ![illustrative HTML to Design import step](./docs/demo/04-figma-import-step.png) |
 
 The last screen is an illustrative local mock. It documents where to paste the URL in HTML to Design without requiring a Figma login or plugin session.
 

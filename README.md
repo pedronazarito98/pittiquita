@@ -30,11 +30,11 @@ localhost -> ativar captura -> URL pronta -> colar no Figma / HTML to Design
 
 | Painel no localhost | Captura ativa |
 | --- | --- |
-| ![painel do pittiquita no localhost](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/01-localhost-panel.png) | ![captura ativa no pittiquita](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/02-capture-active.png) |
+| ![painel do pittiquita no localhost](./docs/demo/01-localhost-panel.png) | ![captura ativa no pittiquita](./docs/demo/02-capture-active.png) |
 
 | Copiar URL | Passo no HTML to Design |
 | --- | --- |
-| ![URL de captura pronta no pittiquita](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/03-copy-url.png) | ![passo ilustrativo de importacao no HTML to Design](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/04-figma-import-step.png) |
+| ![URL de captura pronta no pittiquita](./docs/demo/03-copy-url.png) | ![passo ilustrativo de importacao no HTML to Design](./docs/demo/04-figma-import-step.png) |
 
 A ultima tela e um mock local ilustrativo. Ela documenta onde colar a URL no HTML to Design sem exigir login no Figma ou uma sessao real do plugin.
 
