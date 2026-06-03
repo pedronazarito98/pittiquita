@@ -1,35 +1,67 @@
-# pittiquita
+<div align="center">
+  <img src="https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/logo.svg" width="132" alt="Mascote gatinho do pittiquita dormindo" />
+  <h1>pittiquita</h1>
+  <p>
+    <strong>Capture componentes React vivos no localhost e leve para o Figma com o HTML to Design.</strong>
+  </p>
+  <p>
+    Um painel de desenvolvimento pequeno, seguro para SSR e sem impacto em produção.
+  </p>
+  <p>
+    <a href="https://www.npmjs.com/package/pittiquita"><img alt="versao no npm" src="https://img.shields.io/npm/v/pittiquita?color=6366f1&style=flat-square" /></a>
+    <a href="https://www.npmjs.com/package/pittiquita"><img alt="downloads no npm" src="https://img.shields.io/npm/dm/pittiquita?color=0ea5e9&style=flat-square" /></a>
+    <a href="https://bundlephobia.com/package/pittiquita"><img alt="tamanho do bundle" src="https://img.shields.io/bundlephobia/minzip/pittiquita?label=min%2Bgzip&color=22c55e&style=flat-square" /></a>
+    <a href="https://github.com/pedronazarito98/pittiquita/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/pedronazarito98/pittiquita/actions/workflows/ci.yml/badge.svg" /></a>
+    <a href="https://github.com/pedronazarito98/pittiquita/blob/main/LICENSE"><img alt="licenca" src="https://img.shields.io/npm/l/pittiquita?color=111827&style=flat-square" /></a>
+  </p>
+  <p>
+    <a href="https://www.npmjs.com/package/pittiquita">npm</a>
+    ·
+    <a href="https://github.com/pedronazarito98/pittiquita">GitHub</a>
+    ·
+    <a href="https://github.com/pedronazarito98/pittiquita/issues">Issues</a>
+    ·
+    <a href="https://github.com/pedronazarito98/pittiquita/tree/main/docs/demo">Demo visual</a>
+    ·
+    <a href="https://github.com/pedronazarito98/pittiquita/blob/main/docs/README.en.md">English</a>
+  </p>
+</div>
 
-> Toolkit React exclusivo de desenvolvimento para capturar componentes vivos do localhost e levar para o Figma via HTML to Design.
+---
 
-<p>
-  <a href="https://www.npmjs.com/package/pittiquita"><img alt="versao no npm" src="https://img.shields.io/npm/v/pittiquita?style=flat-square" /></a>
-  <a href="https://www.npmjs.com/package/pittiquita"><img alt="downloads no npm" src="https://img.shields.io/npm/dm/pittiquita?style=flat-square" /></a>
-  <a href="https://github.com/pedronazarito98/pittiquita/blob/main/LICENSE"><img alt="licenca" src="https://img.shields.io/npm/l/pittiquita?style=flat-square" /></a>
-  <a href="https://github.com/pedronazarito98/pittiquita/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/pedronazarito98/pittiquita/actions/workflows/ci.yml/badge.svg" /></a>
-  <a href="https://bundlephobia.com/package/pittiquita"><img alt="tamanho do bundle" src="https://img.shields.io/bundlephobia/minzip/pittiquita?style=flat-square" /></a>
-</p>
+## Visão Geral
 
-**Idioma:** Portugues (padrao) | [English](https://github.com/pedronazarito98/pittiquita/blob/main/docs/README.en.md)
+`pittiquita` acelera o fluxo Design <-> Code. Ele adiciona um painel de captura em apps React locais, permite marcar regiões úteis da página e prepara a URL atual do localhost para uso no plugin [HTML to Design](https://www.figma.com/community/plugin/1159123024924461424/html-to-design) do Figma.
 
-`pittiquita` acelera o fluxo Design <-> Code. Ele adiciona um pequeno painel de captura em apps React locais, permite marcar regioes uteis da pagina e prepara a URL atual do localhost para uso no plugin [HTML to Design](https://www.figma.com/community/plugin/1159123024924461424/html-to-design) do Figma.
+| Feito para | Como ajuda |
+| --- | --- |
+| Handoff de UI real | Captura o estado renderizado pelo navegador, com props, CSS, dados e layout reais. |
+| Fluxos locais seguros | Roda apenas em `localhost` e `127.0.0.1`, com guards para SSR. |
+| Times de design e frontend | Dá um caminho rápido para importar telas e regiões sem DevTools. |
+| Builds de produção | Mantém o pacote tree-shakeable e sem efeitos colaterais no import. |
 
-Ele e seguro para SSR, roda apenas em localhost, e tree-shakeable e foi desenhado para ter zero impacto em produção.
+## Navegação
 
-- npm: [pittiquita](https://www.npmjs.com/package/pittiquita)
-- GitHub: [pedronazarito98/pittiquita](https://github.com/pedronazarito98/pittiquita)
-- Issues: [GitHub Issues](https://github.com/pedronazarito98/pittiquita/issues)
-- Licenca: [MIT](./LICENSE)
-- Demo visual: [docs/demo](https://github.com/pedronazarito98/pittiquita/tree/main/docs/demo)
-- Release: [docs/release.md](https://github.com/pedronazarito98/pittiquita/blob/main/docs/release.md)
+| Comece por aqui | Referências |
+| --- | --- |
+| [Instalação](#instalacao) | [Arquitetura](#arquitetura) |
+| [Uso rápido](#uso-rapido) | [Entry points públicos](#arquitetura) |
+| [Exemplo com Vite](#exemplo-com-vite) | [Scripts de desenvolvimento](#scripts-de-desenvolvimento) |
+| [Exemplo com Next.js](#exemplo-com-nextjs) | [Segurança e privacidade](#seguranca-e-privacidade) |
+
+## Fluxo Principal
+
+```txt
+localhost -> ativar captura -> copiar URL pronta -> colar no HTML to Design
+```
+
+| 1. Rode local | 2. Marque regiões | 3. Ative captura | 4. Importe no Figma |
+| --- | --- | --- | --- |
+| Abra seu app em `localhost`. | Use `FigmaTarget` ou `figmaTarget`. | O painel gera a URL com hash. | Cole a URL no HTML to Design. |
 
 ## Demo Visual
 
-A demo mostra o fluxo principal:
-
-```txt
-localhost -> ativar captura -> URL pronta -> colar no Figma / HTML to Design
-```
+O walkthrough mostra o painel de captura, a URL pronta e o passo de importação:
 
 | Painel no localhost | Captura ativa |
 | --- | --- |
@@ -39,7 +71,7 @@ localhost -> ativar captura -> URL pronta -> colar no Figma / HTML to Design
 | --- | --- |
 | ![URL de captura pronta no pittiquita](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/03-copy-url.png) | ![passo ilustrativo de importacao no HTML to Design](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/04-figma-import-step.png) |
 
-A ultima tela e um mock local ilustrativo. Ela documenta onde colar a URL no HTML to Design sem exigir login no Figma ou uma sessao real do plugin.
+A última tela é um mock local ilustrativo. Ela documenta onde colar a URL no HTML to Design sem exigir login no Figma ou uma sessão real do plugin.
 
 Regere os screenshots com:
 
@@ -57,17 +89,17 @@ pnpm exec playwright install chromium
 
 ## O Problema
 
-Designers e engenheiros muitas vezes precisam inspecionar o estado real renderizado de um componente antes de leva-lo de volta ao Figma. O fluxo manual costuma ser lento:
+Designers e engenheiros muitas vezes precisam inspecionar o estado real renderizado de um componente antes de levá-lo de volta ao Figma.
 
-1. Abrir o DevTools.
-2. Encontrar o node certo no DOM.
-3. Copiar HTML manualmente.
-4. Colar em um plugin do Figma.
-5. Repetir quando o estado do componente muda.
+| Fluxo manual | Com `pittiquita` |
+| --- | --- |
+| Abrir DevTools e encontrar o node certo no DOM. | Ativar captura em um painel local. |
+| Copiar HTML manualmente e torcer para preservar o estado visual. | Copiar a URL completa já preparada. |
+| Repetir tudo quando props, layout ou dados mudam. | Reimportar a página viva no HTML to Design. |
 
-Esse processo e fragil porque o que importa nao e apenas o componente fonte. E o componente vivo, com props, CSS, dados, layout e estado renderizado pelo navegador.
+Esse processo é frágil porque o que importa não é apenas o componente fonte. É o componente vivo, com props, CSS, dados, layout e estado renderizado pelo navegador.
 
-## A Solucao
+## A Solução
 
 `pittiquita` adiciona um helper local de captura ao seu app React.
 
@@ -75,9 +107,9 @@ Com ele voce pode:
 
 - Ativar o modo de captura para Figma por um painel flutuante.
 - Copiar a URL atual do localhost com o hash de captura pronto.
-- Marcar regioes especificas da pagina como alvos nomeados.
-- Navegar ate esses alvos diretamente pelo painel.
-- Manter a ferramenta de captura fora da producao.
+- Marcar regiões específicas da página como alvos nomeados.
+- Navegar até esses alvos diretamente pelo painel.
+- Manter a ferramenta de captura fora da produção.
 
 O handoff fica simples: rode o app localmente, ative a captura, copie a URL e cole no plugin HTML to Design dentro do Figma.
 
