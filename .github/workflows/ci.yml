@@ -8,31 +8,31 @@ on:
 
 jobs:
   validate:
-    name: Validate
+    name: Validar
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Baixar codigo
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
+      - name: Configurar pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 10
 
-      - name: Setup Node
+      - name: Configurar Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
 
-      - name: Install dependencies
+      - name: Instalar dependencias
         run: pnpm install --frozen-lockfile
 
       - name: Lint
         run: pnpm lint
 
-      - name: Test
+      - name: Testes
         run: pnpm test:run
 
       - name: Typecheck
@@ -41,5 +41,5 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Check npm package contents
+      - name: Conferir conteudo do pacote npm
         run: npm pack --dry-run

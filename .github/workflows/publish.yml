@@ -1,4 +1,4 @@
-name: Publish to npm
+name: Publicar no npm
 
 on:
   push:
@@ -7,40 +7,44 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   publish:
-    name: Publish package
+    name: Publicar pacote
     runs-on: ubuntu-latest
 
     if: "!contains(github.event.head_commit.message, '[skip publish]')"
 
     steps:
-      - name: Checkout
+      - name: Baixar codigo
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
+      - name: Configurar pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 10
 
-      - name: Setup Node
+      - name: Configurar Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
           registry-url: https://registry.npmjs.org
 
-      - name: Install dependencies
+      - name: Atualizar npm
+        run: npm install -g npm@latest
+
+      - name: Instalar dependencias
         run: pnpm install --frozen-lockfile
 
-      - name: Validate
+      - name: Validar pacote
         run: pnpm validate
 
-      - name: Check package contents
+      - name: Conferir conteudo do pacote
         run: npm pack --dry-run
 
-      - name: Check if version already exists on npm
+      - name: Conferir se a versao ja existe no npm
         id: version
         shell: bash
         run: |
@@ -55,8 +59,6 @@ jobs:
             echo "Version $PACKAGE_VERSION does not exist on npm. Publishing."
           fi
 
-      - name: Publish to npm
+      - name: Publicar no npm
         if: steps.version.outputs.exists == 'false'
         run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
