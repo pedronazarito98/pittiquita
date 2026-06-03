@@ -1,461 +1,351 @@
-<div align="center">
-  <img src="./docs/logo.svg" width="120" alt="pittiquita logo" />
-  <h1>pittiquita</h1>
-  <p><strong>Manda seus componentes React direto pro Figma — um clique, sem copy-paste, sem ginástica no DevTools.</strong></p>
-  <p>
-    <a href="https://www.npmjs.com/package/pittiquita"><img alt="npm version" src="https://img.shields.io/npm/v/pittiquita?color=6366f1&style=flat-square" /></a>
-    <a href="https://bundlephobia.com/package/pittiquita"><img alt="bundle size" src="https://img.shields.io/bundlephobia/minzip/pittiquita?label=min%2Bgzip&style=flat-square&color=22c55e" /></a>
-    <img alt="tests" src="https://img.shields.io/badge/tests-58%20passing-brightgreen?style=flat-square" />
-    <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-6-3178c6?style=flat-square&logo=typescript&logoColor=white" />
-    <a href="LICENSE"><img alt="license" src="https://img.shields.io/npm/l/pittiquita?style=flat-square" /></a>
-  </p>
-  <p>
-    Funciona com o plugin oficial <a href="https://www.figma.com/community/plugin/1159123024924461424">HTML to Design</a> do Figma.<br/>
-    Só no localhost. Zero impacto em produção. SSR-safe.
-  </p>
-</div>
+# pittiquita
 
----
+> Toolkit React exclusivo de desenvolvimento para capturar componentes vivos do localhost e levar para o Figma via HTML to Design.
 
-## O problema
+<p>
+  <a href="https://www.npmjs.com/package/pittiquita"><img alt="versao no npm" src="https://img.shields.io/npm/v/pittiquita?style=flat-square" /></a>
+  <a href="https://www.npmjs.com/package/pittiquita"><img alt="downloads no npm" src="https://img.shields.io/npm/dm/pittiquita?style=flat-square" /></a>
+  <a href="https://github.com/pedronazarito98/pittiquita/blob/main/LICENSE"><img alt="licenca" src="https://img.shields.io/npm/l/pittiquita?style=flat-square" /></a>
+  <a href="https://bundlephobia.com/package/pittiquita"><img alt="tamanho do bundle" src="https://img.shields.io/bundlephobia/minzip/pittiquita?style=flat-square" /></a>
+</p>
 
-O fluxo normal pra capturar um componente vivo pro Figma costuma ser assim:
+**Idioma:** Portugues (padrao) | [English](https://github.com/pedronazarito98/pittiquita/blob/main/README.en.md)
 
-1. Abre o DevTools
-2. Caça o elemento certo no painel de Elements
-3. Copia o HTML externo na mão
-4. Cola no plugin HTML to Design
-5. Fica se perguntando por que ficou diferente do que tá renderizado
-6. Repete tudo
+`pittiquita` acelera o fluxo Design <-> Code. Ele adiciona um pequeno painel de captura em apps React locais, permite marcar regioes uteis da pagina e prepara a URL atual do localhost para uso no plugin [HTML to Design](https://www.figma.com/community/plugin/1159123024924461424/html-to-design) do Figma.
 
-O `pittiquita` substitui tudo isso por um painel flutuante que só existe no `localhost`. Clica em **Activate capture**, cola a URL no plugin do Figma, pronto. Você também pode marcar regiões específicas da página como alvos nomeados — cada uma vira um botão de atalho no painel.
+Ele e seguro para SSR, roda apenas em localhost, e tree-shakeable e foi desenhado para ter zero impacto em producao.
 
-**Retorna `null` em produção.** A verificação de localhost acontece antes de qualquer renderização, o pacote é tree-shakeable, e `sideEffects: false` garante que os bundlers não vão incluí-lo a menos que você realmente use.
+- npm: [pittiquita](https://www.npmjs.com/package/pittiquita)
+- GitHub: [pedronazarito98/pittiquita](https://github.com/pedronazarito98/pittiquita)
+- Licenca: [MIT](./LICENSE)
+- Demo visual: [docs/demo](./docs/demo)
 
----
+## Demo Visual
 
-## Demo
+A demo mostra o fluxo principal:
 
-```
-┌─────────────────────────────┐
-│ 🎯 pittiquita          _ □  │
-│─────────────────────────────│
-│ [ Activate capture ]        │
-│                             │
-│ Regions                     │
-│ ┌──────────┐ ┌───────────┐  │
-│ │   Hero   │ │  Pricing  │  │
-│ └──────────┘ └───────────┘  │
-│ ┌──────────┐                │
-│ │  Footer  │                │
-│ └──────────┘                │
-│─────────────────────────────│
-│ Figma file ref: [________]  │
-└─────────────────────────────┘
+```txt
+localhost -> ativar captura -> URL pronta -> colar no Figma / HTML to Design
 ```
 
-> Uma gravação de tela de verdade tá chegando. Por enquanto, imagina um painel discreto no canto inferior direito do seu servidor de desenvolvimento.
+| Painel no localhost | Captura ativa |
+| --- | --- |
+| ![painel do pittiquita no localhost](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/01-localhost-panel.png) | ![captura ativa no pittiquita](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/02-capture-active.png) |
 
----
+| Copiar URL | Passo no HTML to Design |
+| --- | --- |
+| ![URL de captura pronta no pittiquita](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/03-copy-url.png) | ![passo ilustrativo de importacao no HTML to Design](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/04-figma-import-step.png) |
 
-## Instalação
+A ultima tela e um mock local ilustrativo. Ela documenta onde colar a URL no HTML to Design sem exigir login no Figma ou uma sessao real do plugin.
+
+Regere os screenshots com:
+
+```bash
+pnpm build
+pnpm --dir playground install
+pnpm run demo:capture
+```
+
+Se o Playwright nao encontrar um navegador na sua maquina, instale o Chromium uma vez:
+
+```bash
+pnpm exec playwright install chromium
+```
+
+## O Problema
+
+Designers e engenheiros muitas vezes precisam inspecionar o estado real renderizado de um componente antes de leva-lo de volta ao Figma. O fluxo manual costuma ser lento:
+
+1. Abrir o DevTools.
+2. Encontrar o node certo no DOM.
+3. Copiar HTML manualmente.
+4. Colar em um plugin do Figma.
+5. Repetir quando o estado do componente muda.
+
+Esse processo e fragil porque o que importa nao e apenas o componente fonte. E o componente vivo, com props, CSS, dados, layout e estado renderizado pelo navegador.
+
+## A Solucao
+
+`pittiquita` adiciona um helper local de captura ao seu app React.
+
+Com ele voce pode:
+
+- Ativar o modo de captura para Figma por um painel flutuante.
+- Copiar a URL atual do localhost com o hash de captura pronto.
+- Marcar regioes especificas da pagina como alvos nomeados.
+- Navegar ate esses alvos diretamente pelo painel.
+- Manter a ferramenta de captura fora da producao.
+
+O handoff fica simples: rode o app localmente, ative a captura, copie a URL e cole no plugin HTML to Design dentro do Figma.
+
+## Quando Usar
+
+Use `pittiquita` quando voce quiser:
+
+- Levar estados reais de UI React para o Figma para revisao ou iteracao.
+- Documentar estados de componentes a partir de um ambiente local.
+- Dar ao time de design um caminho estavel para importar telas renderizadas sem DevTools.
+- Capturar regioes especificas como hero, pricing, cards, formularios ou dashboards.
+- Manter esse fluxo exclusivo de desenvolvimento e seguro para bundles de producao.
+
+Ele nao substitui design tokens, bibliotecas de componentes, Storybook ou componentes nativos do Figma. Ele e uma ponte para capturar estados HTML vivos rapidamente.
+
+## Instalacao
 
 ```bash
 pnpm add pittiquita
-# or
-npm install pittiquita
-# or
-yarn add pittiquita
 ```
 
-**Peer deps:** `react >=18` e `react-dom >=18` (testado no React 18 e 19).
+Peer dependencies:
 
----
+```txt
+react >=18
+react-dom >=18
+```
 
-## Início rápido
+## Uso Rapido
 
-Joga o `<FigmaCapturePanel />` no layout raiz e esquece:
+Renderize o painel dentro de uma arvore React no cliente:
 
 ```tsx
-// app/layout.tsx (Next.js) or src/main.tsx (Vite)
-import { FigmaCapturePanel } from "pittiquita";
+import { FigmaCapturePanel } from 'pittiquita'
 
-export default function Layout({ children }) {
+export function App() {
   return (
     <>
-      {children}
+      <YourApplication />
       <FigmaCapturePanel />
     </>
-  );
+  )
 }
 ```
 
-Roda `pnpm dev`, abre `http://localhost:xxxx`, e o painel vai estar lá te esperando. Clica em **Activate capture**, copia a URL (com o hash), cola no plugin **HTML to Design** dentro do Figma. É isso.
+Inicie seu servidor de desenvolvimento e abra uma URL localhost. O painel retorna `null` fora de `localhost` e `127.0.0.1`.
 
----
+## Exemplo Com Next.js
 
-## Marcando regiões
-
-Regiões permitem criar atalhos nomeados para partes específicas da página. Elas aparecem como botões no painel — clicar em uma delas rola a página até aquele elemento e o destaca no DOM.
-
-### Componente wrapper
+No App Router, coloque um pequeno Client Component proximo ao layout raiz.
 
 ```tsx
-import { FigmaTarget } from "pittiquita";
+// app/PittiquitaPanel.tsx
+'use client'
 
-<FigmaTarget name="hero-section" label="Hero">
-  <section className="hero">...</section>
-</FigmaTarget>;
-```
+import { usePathname } from 'next/navigation'
+import { FigmaCapturePanel } from 'pittiquita'
 
-### Spread helper (sem nó extra no DOM)
-
-```tsx
-import { figmaTarget } from "pittiquita";
-
-<section {...figmaTarget("hero-section", { label: "Hero" })}>...</section>;
-```
-
-Os dois jeitos escrevem os atributos `data-figma-target` e `data-figma-label` no elemento. O painel os descobre automaticamente via `MutationObserver` — sem precisar dar refresh manual.
-
----
-
-## Hooks headless
-
-Não quer o painel pronto? Importa só os hooks e monta sua própria UI:
-
-```tsx
-import {
-  useLocalOrigin,
-  useFigmaCapture,
-  useFigmaRegions,
-  useFigmaFileRef,
-} from "pittiquita/hooks";
-
-function MyDevPanel() {
-  const isLocal = useLocalOrigin(); // SSR-safe — começa false, atualiza após a montagem
-  const { isActive, activate, reset } = useFigmaCapture();
-  const { regions, refresh } = useFigmaRegions();
-  const { value, setValue, openExistingFile } = useFigmaFileRef();
-
-  if (!isLocal) return null;
-
-  return (
-    <div>
-      <button onClick={activate}>Capture</button>
-      <ul>
-        {regions.map((r) => (
-          <li key={r.name}>{r.label ?? r.name}</li>
-        ))}
-      </ul>
-    </div>
-  );
+export function PittiquitaPanel() {
+  return <FigmaCapturePanel pathname={usePathname()} />
 }
 ```
-
-Todos os hooks são SSR-safe e só fazem trabalho de verdade no cliente, e apenas no `localhost`.
-
-### Referência dos hooks
-
-| Hook                        | Retorna                                 | Observações                                         |
-| --------------------------- | --------------------------------------- | --------------------------------------------------- |
-| `useLocalOrigin()`          | `boolean`                               | `true` apenas em `localhost` / `127.0.0.1`          |
-| `useFigmaCapture(options?)` | `{ isActive, activate, reset }`         | Injeta o script do Figma ao ativar                  |
-| `useFigmaRegions(options?)` | `{ regions, refresh }`                  | Reativo via `MutationObserver` + debounce com `rAF` |
-| `useFigmaFileRef()`         | `{ value, setValue, openExistingFile }` | Persiste no `localStorage`                          |
-
----
-
-## Plugins de build
-
-### Vite
-
-O plugin do Vite injeta o painel automaticamente numa shadow root durante o `dev` — nada toca no build de produção.
-
-```ts
-// vite.config.ts
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import { pittiquita } from "pittiquita/vite";
-
-export default defineConfig({
-  plugins: [react(), pittiquita()],
-});
-```
-
-O plugin só roda com `apply: 'serve'`. O output do build sai limpo.
-
-### Next.js (App Router)
-
-Nenhum plugin necessário. Importa o componente direto no layout raiz:
 
 ```tsx
 // app/layout.tsx
-import { FigmaCapturePanel } from "pittiquita";
+import type { ReactNode } from 'react'
+import { PittiquitaPanel } from './PittiquitaPanel'
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR">
       <body>
         {children}
-        {process.env.NODE_ENV === "development" && <FigmaCapturePanel />}
+        {process.env.NODE_ENV === 'development' ? <PittiquitaPanel /> : null}
       </body>
     </html>
-  );
+  )
 }
 ```
 
-O guard `process.env.NODE_ENV` é opcional (o componente já retorna `null` fora do localhost), mas é uma boa prática pra manter código exclusivo de dev fora do bundle de produção.
+O guard `NODE_ENV` e opcional porque o componente ja verifica localhost, mas ajuda bundlers a removerem UI exclusiva de desenvolvimento de branches de producao.
 
----
+## Exemplo Com Vite
 
-## Customização
+Use o plugin do Vite para injetar o painel automaticamente durante `vite dev`:
 
-### Tokens de tema
+```ts
+// vite.config.ts
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
+import { pittiquita } from 'pittiquita/vite'
 
-Todos os estilos visuais são controlados por CSS custom properties. Passa um objeto `theme` parcial — só o que você quer sobrescrever:
+export default defineConfig({
+  plugins: [react(), pittiquita()],
+})
+```
+
+O plugin Vite roda apenas durante o servidor de desenvolvimento. Builds de producao ficam intocados.
+
+Voce tambem pode renderizar `<FigmaCapturePanel />` manualmente em um app Vite se preferir controle explicito.
+
+## Marcando Regioes
+
+Regioes marcadas aparecem no painel como atalhos nomeados. Ao selecionar uma, o painel rola ate o elemento e destaca a area para captura.
+
+### Com `FigmaTarget`
 
 ```tsx
-<FigmaCapturePanel
-  theme={{
-    accentColor: "#8b5cf6",
-    panelBg: "#0f172a",
-    textPrimary: "#f8fafc",
-    borderRadius: "12px",
-  }}
-/>
-```
+import { FigmaTarget } from 'pittiquita'
 
-| Token           | Padrão    | Descrição                 |
-| --------------- | --------- | ------------------------- |
-| `panelBg`       | `#ffffff` | Fundo do painel           |
-| `borderColor`   | `#e2e8f0` | Borda do painel           |
-| `borderRadius`  | `8px`     | Arredondamento das bordas |
-| `accentColor`   | `#6366f1` | Botões e destaques        |
-| `textPrimary`   | `#0f172a` | Texto principal           |
-| `textSecondary` | `#475569` | Texto secundário          |
-| `textMuted`     | `#94a3b8` | Texto suave / placeholder |
-| `fontFamily`    | system-ui | Fonte do painel           |
-| `fontSize`      | `13px`    | Tamanho base da fonte     |
-| `gap`           | `8px`     | Espaçamento interno       |
-| `padding`       | `12px`    | Padding do painel         |
-| `zIndex`        | `9999`    | Ordem de empilhamento     |
-
-### Labels (i18n)
-
-Sobrescreve qualquer string. O resto cai no padrão em inglês:
-
-```tsx
-<FigmaCapturePanel
-  labels={{
-    panelTitle: "Capturar para Figma",
-    activateCapture: "Ativar",
-    reset: "Limpar",
-    regionsTitle: "Regiões marcadas",
-    regionsEmpty: "Nenhuma região marcada",
-  }}
-/>
-```
-
-### Slots de classes CSS (pronto para Tailwind)
-
-```tsx
-<FigmaCapturePanel
-  classNames={{
-    header: "border-b border-slate-200 pb-2",
-    actions: "flex gap-3",
-    regionList: "max-h-72 overflow-y-auto",
-    fileField: "mt-2",
-    hiddenBar: "opacity-50",
-  }}
-/>
-```
-
-### Posição do painel
-
-```tsx
-<FigmaCapturePanel position="top-left" />
-```
-
-Opções: `'bottom-right'` _(padrão)_ · `'bottom-left'` · `'top-right'` · `'top-left'`
-
-### Callbacks
-
-```tsx
-<FigmaCapturePanel
-  onCaptureActivate={() => analytics.track("figma_capture_activated")}
-  onRegionSelect={(region) => console.log("jumped to:", region.label)}
-/>
-```
-
-### CSP / script self-hosted
-
-Por padrão, o pittiquita injeta:
-
-```
-https://mcp.figma.com/mcp/html-to-design/capture.js
-```
-
-Somente quando `hostname === 'localhost'` **e** o hash da URL contém `figmacapture=`. Se o seu ambiente usa uma Content Security Policy restrita:
-
-```tsx
-<FigmaCapturePanel
-  scriptSrc="https://your-mirror.example.com/capture.js"
-  integrity="sha384-..."
-  nonce={yourCspNonce}
-  crossOrigin="anonymous"
-/>
-```
-
-As mesmas opções estão disponíveis em `useFigmaCapture(options)` para uso headless.
-
----
-
-## Entry points
-
-| Import             | Arquivo fonte        | Use para                                               |
-| ------------------ | -------------------- | ------------------------------------------------------ |
-| `pittiquita`       | `src/index.ts`       | Components + hooks + utils + types                     |
-| `pittiquita/hooks` | `src/hooks.ts`       | Apenas hooks headless (sem bundle de componente React) |
-| `pittiquita/vite`  | `src/vite/plugin.ts` | Plugin do Vite                                         |
-| `pittiquita/next`  | `src/next/plugin.ts` | Wrapper de config `withPittiquita()` pro Next.js       |
-
----
-
-## Solução de problemas
-
-### O painel não aparece
-
-- Você precisa estar em `localhost` ou `127.0.0.1`. Domínios `.local` customizados e IPs da rede local (`192.168.x.x`) não vão funcionar — por design.
-- Em apps com SSR, o painel começa oculto e aparece após a hidratação. Se nunca aparecer, verifica se `useLocalOrigin()` retorna `true` no console do navegador.
-
-### Cliquei em Activate e nada aconteceu no Figma
-
-1. O hash da URL deve ter mudado para `#figmacapture=manual`.
-2. Um `<script data-figma-capture-loader>` deve estar no `<head>` — confere no painel de Elements.
-3. O plugin **HTML to Design** precisa estar aberto no Figma com o modo **"Import from URL"** selecionado.
-4. Cola a URL completa (com o hash) no campo do plugin.
-
-### O CSP bloqueou o script
-
-Usa `nonce` (ou `integrity`). Exemplo com Next.js App Router:
-
-```tsx
-import { headers } from "next/headers";
-import { FigmaCapturePanel } from "pittiquita";
-
-export default async function Layout({ children }) {
-  const nonce = (await headers()).get("x-csp-nonce") ?? undefined;
+export function MarketingPage() {
   return (
-    <html>
-      <body>
-        {children}
-        <FigmaCapturePanel nonce={nonce} />
-      </body>
-    </html>
-  );
+    <FigmaTarget name="hero-section" label="Hero">
+      <section>
+        <h1>UI pronta para design</h1>
+      </section>
+    </FigmaTarget>
+  )
 }
 ```
 
-### As regiões não atualizam na navegação (SPA)
+### Com `figmaTarget`
 
-O pittiquita escuta `popstate` e `hashchange` automaticamente. Para roteadores que atualizam apenas o estado interno (Next.js App Router, TanStack Router), passa o pathname atual:
+Use o helper quando nao quiser criar um wrapper extra no DOM:
 
 ```tsx
-"use client";
-import { usePathname } from "next/navigation";
-import { FigmaCapturePanel } from "pittiquita";
+import { figmaTarget } from 'pittiquita'
 
-export function DevPanel() {
-  return <FigmaCapturePanel pathname={usePathname()} />;
+export function PricingCards() {
+  return (
+    <section {...figmaTarget('pricing-cards', { label: 'Pricing cards' })}>
+      ...
+    </section>
+  )
 }
 ```
 
----
+As duas APIs escrevem os atributos `data-figma-target` e `data-figma-label`. O painel descobre essas regioes automaticamente com `MutationObserver`.
 
-## FAQ
+## Como A Captura Funciona
 
-**É seguro subir o import pra produção?**
+1. `FigmaCapturePanel` renderiza apenas em `localhost` ou `127.0.0.1`.
+2. Clicar em `Activate capture` adiciona `#figmacapture=manual` a URL atual.
+3. Quando esse hash esta presente, o pittiquita injeta o script de captura do Figma HTML to Design.
+4. Voce copia a URL completa do localhost.
+5. No Figma, abra o HTML to Design e importe por URL.
+6. O plugin le a pagina renderizada e recria a tela como camadas editaveis no Figma.
 
-Sim. O componente retorna `null` fora do `localhost`. Pra ter ainda mais certeza, envolve em `process.env.NODE_ENV === 'development'` — os bundlers vão eliminar o branch morto completamente.
+O painel marca a si mesmo com `data-figma-helper` para que a UI auxiliar possa ser ignorada pela logica de captura.
 
-**Funciona com React Server Components?**
+## Hooks Headless
 
-`<FigmaCapturePanel>` usa hooks internamente, então precisa ser um Client Component. Adiciona `'use client'` no arquivo que o importa, ou cria um wrapper fino com essa diretiva.
+Se quiser criar sua propria UI, importe o entry point de hooks:
 
-**Posso usar com Tailwind / styled-components / CSS Modules?**
+```tsx
+import {
+  useFigmaCapture,
+  useFigmaFileRef,
+  useFigmaRegions,
+  useLocalOrigin,
+} from 'pittiquita/hooks'
 
-Sim. Usa os slots de `classNames` pra injetar suas próprias classes e mantém `theme` para os tokens de CSS variable.
+export function CustomCaptureToolbar() {
+  const isLocal = useLocalOrigin()
+  const { activate } = useFigmaCapture({ enabled: isLocal })
+  const { regions } = useFigmaRegions({ enabled: isLocal })
+  const fileRef = useFigmaFileRef()
 
-**Algum dado é enviado para servidores externos?**
+  if (!isLocal) return null
 
-Nada vindo do `pittiquita` em si. Quando você ativa a captura, o script do Figma (`mcp.figma.com`) cuida da leitura do DOM de acordo com a [política de privacidade](https://www.figma.com/legal/privacy/) do próprio Figma.
+  return (
+    <div>
+      <button type="button" onClick={activate}>
+        Capturar
+      </button>
+      <span>{regions.length} regioes</span>
+      <input value={fileRef.value} onChange={(event) => fileRef.setValue(event.target.value)} />
+    </div>
+  )
+}
+```
 
-**Funciona com design tokens / CSS variables que já tenho no projeto?**
+## Arquitetura
 
-Sim. A prop `theme` mapeia os tokens internos do pittiquita para variáveis CSS `--pittiquita-*`. Seus tokens de design system existentes não são tocados.
+```txt
+src/
+  core/
+    hooks/      hooks React com guards de browser
+    utils/      captura, file-ref, labels e utilitarios de regioes
+    types.ts    tipos publicos compartilhados
+  react/
+    FigmaCapturePanel.tsx
+    FigmaTarget.tsx
+    components/
+    styles.ts   estilos inline e CSS custom properties
+  vite/
+    plugin.ts   injecao Vite exclusiva de desenvolvimento
+  next/
+    plugin.ts   entry point auxiliar para configuracao Next.js
+tests/
+  core/
+  react/
+playground/
+  app demo Vite linkado ao pacote local
+docs/demo/
+  walkthrough visual gerado com Playwright
+```
 
----
+Entry points publicos:
 
-## Desenvolvimento
+| Import | Uso |
+| --- | --- |
+| `pittiquita` | Componentes, hooks, utilitarios e tipos publicos |
+| `pittiquita/hooks` | Hooks headless e utilitarios |
+| `pittiquita/vite` | Plugin Vite de desenvolvimento |
+| `pittiquita/next` | Helper de configuracao para Next.js |
+
+## Scripts De Desenvolvimento
+
+Use `pnpm`.
 
 ```bash
 pnpm install
-pnpm test:run       # roda todos os 58 testes de uma vez (Vitest)
-pnpm typecheck      # tsc --noEmit
-pnpm build          # tsup → dist/ (ESM + CJS + .d.ts)
-pnpm dev            # tsup --watch
-
-# playground interativo (app Vite linkado ao pacote local)
-# build the library first, then:
-cd playground && pnpm install && pnpm dev
+pnpm test:run
+pnpm typecheck
+pnpm build
+pnpm lint
+pnpm run demo:capture
+pnpm --dir playground dev
+pnpm --dir playground build
 ```
 
-Rodando um arquivo de teste específico:
+O script de captura da demo espera que o pacote tenha sido compilado antes, porque o playground consome o pacote pai pelos exports publicos.
 
-```bash
-pnpm vitest run tests/core/utils/regions.test.ts
-```
+## Metadados Do Pacote
 
-**Stack:** TypeScript 6 · React 18/19 · Vite 8 · Vitest 4 · tsup 8 · pnpm
+O pacote e publicado como ESM e CJS via `tsup`.
 
-### Visão geral da arquitetura
+- `main`: `./dist/index.cjs`
+- `module`: `./dist/index.js`
+- `types`: `./dist/index.d.ts`
+- `exports`: `.`, `./hooks`, `./vite`, `./next`
+- `files`: `dist`
+- `sideEffects`: `false`
+- `license`: `MIT`
 
-```
-src/
-├── core/              # TypeScript puro — zero dependência do React
-│   ├── utils/         # capture, regions, file-ref, labels
-│   ├── hooks/         # useFigmaCapture, useFigmaRegions, useFigmaFileRef, useLocalOrigin
-│   └── types.ts       # Todos os tipos compartilhados
-├── react/             # Camada de apresentação React
-│   ├── FigmaTarget.tsx
-│   ├── FigmaCapturePanel.tsx
-│   ├── components/    # ActionsRow, FileRefField, HiddenBar, RegionList
-│   └── styles.ts      # Estilos inline + sistema de CSS variables
-├── vite/plugin.ts     # Plugin do Vite
-└── next/plugin.ts     # Wrapper de config para Next.js
-```
+`sideEffects: false` e intencional porque o pacote nao tem efeitos colaterais no momento do import. O comportamento de captura so inicia quando consumidores renderizam o painel ou chamam hooks em contexto de navegador.
 
-O core é headless e agnóstico de framework. Nova lógica vai em `core/`. Nova UI vai em `react/`. Mantém essa separação.
+## Limitacoes Conhecidas
 
-### Contribuindo
+- A captura e limitada a `localhost` e `127.0.0.1` por design.
+- O passo real de importacao depende do plugin HTML to Design do Figma.
+- O pacote nao autentica com o Figma e nao gerencia arquivos Figma.
+- Paginas com Shadow DOM ou muitos iframes podem exigir verificacao manual no HTML to Design.
+- O plugin Vite e pensado para servidor de desenvolvimento, nao para injecao em producao.
 
-1. Faz um fork do repositório
-2. Cria uma branch: `git checkout -b feat/sua-feature`
-3. Adiciona testes para tudo que for novo
-4. Roda `pnpm test:run && pnpm typecheck && pnpm build`
-5. Abre um PR
+## Seguranca E Privacidade
 
----
+- Nenhum `.env`, token, cookie ou credencial e exigido pelo pittiquita.
+- O helper retorna `null` fora de origens locais de desenvolvimento.
+- O pacote nao envia dados para nenhum servidor do pittiquita.
+- Ao ativar a captura, o script do Figma HTML to Design e carregado do dominio do Figma, e o comportamento de importacao passa a ser controlado pelo plugin do Figma.
+- Use dados de desenvolvimento ao importar telas sensiveis para o Figma.
 
-## Licença & créditos
+## Roadmap
 
-MIT © [Pedro Nazarito](https://github.com/pedronazarito98)
+- Adicionar um mapa visual de regioes mais rico para paginas densas.
+- Adicionar affordances opcionais para copiar a URL de captura.
+- Melhorar a documentacao para fluxos com design systems e Storybook.
+- Adicionar mais exemplos para Next.js App Router e monorepos Vite.
 
-Batizado em homenagem à Pittiquita — a gata que supervisionou cada commit deste projeto e não teve nenhuma nota a dar. 🐱
+## Licenca
 
-> _"Se não fosse ela miando no meu colo enquanto eu escrevia isso, o nome seria algo sem graça tipo `figma-capture-kit`."_
+MIT (c) Pedro Nazarito. Veja [LICENSE](./LICENSE).
