@@ -1,15 +1,17 @@
-# pittiquita visual demo
+# Demo visual do pittiquita
 
-This folder contains a short Playwright-generated visual walkthrough of the pittiquita flow:
+Esta pasta contem um walkthrough visual curto gerado com Playwright para o fluxo do pittiquita:
 
-1. `01-localhost-panel.png` - the playground running on localhost with the capture panel visible.
-2. `02-capture-active.png` - capture mode after clicking `Activate capture`.
-3. `03-copy-url.png` - the full URL with `#figmacapture=manual` ready to copy.
-4. `04-figma-import-step.png` - an illustrative local mock showing where the URL is pasted in Figma's HTML to Design plugin.
+1. `01-localhost-panel.png` - o playground rodando em localhost com o painel de captura visivel.
+2. `02-capture-active.png` - modo de captura apos clicar em `Activate capture`.
+3. `03-copy-url.png` - URL completa com `#figmacapture=manual` pronta para copiar.
+4. `04-figma-import-step.png` - mock local ilustrativo mostrando onde a URL e colada no plugin HTML to Design do Figma.
 
-The last screen is intentionally a mock. It avoids requiring a Figma login or a real plugin session while still documenting the handoff step accurately.
+A ultima tela e intencionalmente um mock. Ela evita exigir login no Figma ou uma sessao real do plugin, mas documenta o passo de handoff com honestidade.
 
-## Regenerate
+**Idioma:** Portugues (padrao) | [English](./README.en.md)
+
+## Regenerar
 
 ```bash
 pnpm build
@@ -17,7 +19,7 @@ pnpm --dir playground install
 pnpm run demo:capture
 ```
 
-If Playwright cannot find a local browser, run:
+Se o Playwright nao encontrar um navegador local, rode:
 
 ```bash
 pnpm exec playwright install chromium
