@@ -2,32 +2,55 @@
 
 Este pacote publica no npm automaticamente pelo GitHub Actions quando um novo commit chega na branch `main`.
 
-## Publicacao com token
+## Publicacao recomendada com Trusted Publishing
 
-1. Crie um token de acesso no npm com permissao de publicacao para o pacote `pittiquita`.
-2. No GitHub, abra as configuracoes do repositorio.
-3. Acesse Settings -> Secrets and variables -> Actions -> New repository secret.
-4. Crie um secret chamado `NPM_TOKEN` e cole o token do npm como valor.
-5. Atualize a `version` no `package.json`, abra um pull request e faca merge na `main`.
+O npm Trusted Publishing e o caminho recomendado, porque permite que o GitHub Actions publique via OIDC sem armazenar um `NPM_TOKEN` de longa duracao.
 
-O workflow de publicacao roda `pnpm validate`, confere o conteudo do pacote com `npm pack --dry-run`, verifica se a mesma versao ja existe no npm e publica apenas quando a versao e nova.
+Para habilitar:
 
-Nunca commite tokens do npm, nunca coloque tokens de publicacao em um arquivo `.env` versionado e nunca imprima tokens em logs.
+1. Abra o pacote `pittiquita` no npm.
+2. Va em Settings -> Trusted publishing.
+3. Escolha GitHub Actions como provider.
+4. Configure:
+   - Organization or user: `pedronazarito98`
+   - Repository: `pittiquita`
+   - Workflow filename: `publish.yml`
+   - Allowed actions: `npm publish`
+5. Salve a configuracao.
+
+O workflow de publicacao usa `id-token: write`, Node.js 22 e npm CLI atualizado para permitir que o npm autentique a publicacao por OIDC.
+
+Depois disso, nao e necessario criar nem manter `NPM_TOKEN` no GitHub.
+
+## Fluxo de publicacao
+
+1. Atualize a `version` no `package.json` para uma versao ainda nao publicada.
+2. Abra um pull request.
+3. Faca merge na `main`.
+4. O workflow roda `pnpm validate`.
+5. O workflow confere o conteudo com `npm pack --dry-run`.
+6. O workflow verifica se a mesma versao ja existe no npm.
+7. Se a versao for nova, o workflow publica com `npm publish --access public`.
 
 Para fazer merge sem publicar, inclua `[skip publish]` na mensagem do commit de merge.
 
-## Alternativa com Trusted Publishing
+## Erro EOTP
 
-O npm Trusted Publishing e preferivel quando estiver disponivel, porque permite que o GitHub Actions publique via OIDC em vez de usar um `NPM_TOKEN` de longa duracao.
+Se o GitHub Actions falhar com `npm error code EOTP`, o npm esta exigindo um codigo de 2FA para publicar.
 
-Nao troque o workflow antes de configurar um trusted publisher nas configuracoes do pacote no npm. No npm, configure:
+Isso normalmente acontece quando o workflow usa `NPM_TOKEN` e o token nao tem bypass de 2FA. Trusted Publishing corrige esse problema porque troca o token por autenticacao OIDC de curta duracao.
 
-- Provider: GitHub Actions
+Se for necessario continuar com token em vez de Trusted Publishing, crie no npm um granular access token com permissao de publicacao para `pittiquita` e bypass de 2FA habilitado. Depois substitua o valor do secret `NPM_TOKEN` no GitHub. Nunca commite tokens do npm, nunca coloque tokens de publicacao em um arquivo `.env` versionado e nunca imprima tokens em logs.
+
+## Requisitos do Trusted Publishing
+
+O npm exige npm CLI 11.5.1 ou mais novo e Node.js 22.14.0 ou mais novo para Trusted Publishing.
+
+O trusted publisher precisa apontar exatamente para:
+
 - Repositorio: `pedronazarito98/pittiquita`
-- Nome do arquivo de workflow: `publish.yml`
-- Acao permitida: `npm publish`
-
-Atualmente, o npm exige npm CLI 11.5.1 ou mais novo e Node.js 22.14.0 ou mais novo para Trusted Publishing. Depois de confirmar a configuracao no npm, o workflow pode remover `NODE_AUTH_TOKEN`, adicionar `id-token: write`, usar uma versao compativel de Node/npm e rodar `npm publish --access public` sem `NPM_TOKEN`.
+- Arquivo de workflow: `publish.yml`
+- Caminho no repositorio: `.github/workflows/publish.yml`
 
 Referencias:
 
