@@ -13,7 +13,7 @@
 
 `pittiquita` acelera o fluxo Design <-> Code. Ele adiciona um pequeno painel de captura em apps React locais, permite marcar regioes uteis da pagina e prepara a URL atual do localhost para uso no plugin [HTML to Design](https://www.figma.com/community/plugin/1159123024924461424/html-to-design) do Figma.
 
-Ele e seguro para SSR, roda apenas em localhost, e tree-shakeable e foi desenhado para ter zero impacto em producao.
+Ele e seguro para SSR, roda apenas em localhost, e tree-shakeable e foi desenhado para ter zero impacto em produção.
 
 - npm: [pittiquita](https://www.npmjs.com/package/pittiquita)
 - GitHub: [pedronazarito98/pittiquita](https://github.com/pedronazarito98/pittiquita)
