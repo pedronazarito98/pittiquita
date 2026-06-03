@@ -1,0 +1,56 @@
+# Environment / secrets
+.env
+.env.*
+*.pem
+*.key
+*.cert
+*.p12
+*.token
+*.secret
+secrets.*
+credentials.*
+
+# Agent / AI working files
+agents/
+agent/
+skills/
+skill/
+prompts/
+prompt/
+.claude/
+.cursor/
+.codex/
+.windsurf/
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.github/copilot-instructions.md
+
+# Development only
+src/
+tests/
+coverage/
+playground/
+docs/README.en.md
+docs/demo/raw/
+scripts/
+tsconfig*.json
+vitest.config.*
+vite.config.*
+tsup.config.*
+eslint.config.*
+.prettierrc*
+.editorconfig
+
+# Package managers / logs
+node_modules/
+pnpm-lock.yaml
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
