@@ -1,6 +1,6 @@
 {
   "name": "pittiquita",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "React toolkit for capturing localhost components and sending them to Figma via HTML to Design",
   "type": "module",
   "author": {
