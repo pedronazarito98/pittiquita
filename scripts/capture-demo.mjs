@@ -1,464 +1,542 @@
 import { spawn } from 'node:child_process'
-import { once } from 'node:events'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { copyFile, mkdir, mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { chromium } from 'playwright'
+import {
+  DEMO_GIF,
+  DEMO_SCREENSHOTS,
+  DEMO_VIDEO,
+  FIGMA_MOCK_LABEL,
+  FIGMA_MOCK_NOTE,
+  VIDEO_SIZE,
+  parseDemoPort,
+  resolveDemoPaths,
+} from './demo/config.mjs'
+import { renderFigmaMockHtml } from './demo/figma-mock.mjs'
+import {
+  assertMediaTools,
+  createGifFromVideo,
+  createVideoFromScreenshots,
+  normalizeRecordedVideo,
+} from './demo/media.mjs'
+import {
+  createCleanupStack,
+  createLogBuffer,
+  terminateProcessTree,
+  wait,
+  waitForServer,
+} from './demo/runtime.mjs'
+import {
+  formatValidationReport,
+  validateDemoArtifacts,
+} from './demo/validation.mjs'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const rootDir = path.resolve(__dirname, '..')
-const outputDir = path.join(rootDir, 'docs', 'demo')
-const port = Number(process.env.PITTIQUITA_DEMO_PORT ?? 4175)
+const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const outputPaths = resolveDemoPaths(rootDir)
+const port = parseDemoPort()
 const baseUrl = `http://127.0.0.1:${port}`
-const pnpm = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
+const captureScriptUrl = 'https://mcp.figma.com/mcp/html-to-design/capture.js'
+
 const childEnv = Object.fromEntries(
   Object.entries(process.env).filter(
     ([key, value]) => value !== undefined && !key.startsWith('=')
   )
 )
 
-const screenshotOptions = {
-  animations: 'disabled',
-  fullPage: false,
-}
+function parseCommandLine(args) {
+  const knownFlags = new Set(['--', '--screenshots', '--record', '--from-screenshots'])
+  const unknownFlags = args.filter((argument) => !knownFlags.has(argument))
 
-const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
-
-async function waitForServer(url, timeoutMs = 30000) {
-  const startedAt = Date.now()
-
-  while (Date.now() - startedAt < timeoutMs) {
-    try {
-      const response = await fetch(url)
-      if (response.ok) return
-    } catch {
-      // Keep polling until Vite is ready.
-    }
-
-    await wait(300)
+  if (unknownFlags.length > 0) {
+    throw new Error(`Unknown demo option(s): ${unknownFlags.join(', ')}`)
+  }
+  if (args.includes('--screenshots') && args.includes('--record')) {
+    throw new Error('Choose either --screenshots or --record, not both')
   }
 
-  throw new Error(`Timed out waiting for ${url}`)
+  const mode = args.includes('--record') ? 'record' : 'screenshots'
+  const fromScreenshots =
+    args.includes('--from-screenshots') ||
+    process.env.PITTIQUITA_DEMO_FROM_SCREENSHOTS === '1'
+
+  if (fromScreenshots && mode !== 'record') {
+    throw new Error('--from-screenshots is only supported together with --record')
+  }
+
+  return { mode, fromScreenshots }
 }
 
 function startPlayground() {
-  const command = process.platform === 'win32'
-    ? process.env.ComSpec ?? 'cmd.exe'
-    : pnpm
-  const args = process.platform === 'win32'
-    ? ['/d', '/s', '/c', `pnpm --dir playground dev --host 127.0.0.1 --port ${port}`]
-    : ['--dir', 'playground', 'dev', '--host', '127.0.0.1', '--port', String(port)]
-
+  const pnpmExecPath = process.env.npm_execpath
+  const canReusePnpmProcess = pnpmExecPath?.includes('pnpm')
+  const command = canReusePnpmProcess
+    ? process.execPath
+    : process.platform === 'win32'
+      ? process.env.ComSpec ?? 'cmd.exe'
+      : 'pnpm'
+  const args = canReusePnpmProcess
+    ? [
+        pnpmExecPath,
+        '--dir',
+        'playground',
+        'dev',
+        '--host',
+        '127.0.0.1',
+        '--port',
+        String(port),
+        '--strictPort',
+      ]
+    : process.platform === 'win32'
+      ? ['/d', '/s', '/c', `pnpm --dir playground dev --host 127.0.0.1 --port ${port} --strictPort`]
+      : [
+          '--dir',
+          'playground',
+          'dev',
+          '--host',
+          '127.0.0.1',
+          '--port',
+          String(port),
+          '--strictPort',
+        ]
+  const logs = createLogBuffer()
   const child = spawn(command, args, {
     cwd: rootDir,
     stdio: ['ignore', 'pipe', 'pipe'],
+    detached: process.platform !== 'win32',
+    windowsHide: true,
     env: {
       ...childEnv,
       BROWSER: 'none',
     },
   })
 
-  let logs = ''
-  child.stdout.on('data', (chunk) => {
-    logs += chunk.toString()
-  })
-  child.stderr.on('data', (chunk) => {
-    logs += chunk.toString()
+  child.stdout.on('data', (chunk) => logs.append(chunk))
+  child.stderr.on('data', (chunk) => logs.append(chunk))
+
+  const exited = new Promise((resolve, reject) => {
+    child.once('error', reject)
+    child.once('exit', (code, signal) => resolve({ code, signal }))
   })
 
   return {
-    stop: async () => {
-      if (child.killed) return
-
-      if (process.platform === 'win32' && child.pid) {
-        const killer = spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], {
-          stdio: 'ignore',
-        })
-        await once(killer, 'exit')
-        return
-      }
-
-      child.kill()
-      await once(child, 'exit')
-    },
-    getLogs: () => logs,
+    exited,
+    getLogs: () => logs.read(),
+    stop: () => terminateProcessTree(child),
   }
 }
 
 async function launchBrowser() {
-  const channel = process.env.PLAYWRIGHT_CHANNEL ?? 'msedge'
+  let chromium
 
   try {
-    return await chromium.launch({ channel })
-  } catch (channelError) {
+    const playwright = await import('playwright')
+    chromium = playwright.chromium
+  } catch (error) {
+    throw new Error(
+      `Playwright is not installed. Run \`pnpm install --frozen-lockfile\`.\n${error.message}`
+    )
+  }
+
+  const requestedChannel = process.env.PLAYWRIGHT_CHANNEL
+  let channelError
+
+  if (requestedChannel) {
     try {
-      return await chromium.launch()
-    } catch (defaultError) {
-      throw new Error(
-        [
-          `Could not launch Playwright Chromium or ${channel}.`,
-          'Run `pnpm exec playwright install chromium` or set PLAYWRIGHT_CHANNEL to an installed browser channel.',
-          `Channel error: ${channelError.message}`,
-          `Default error: ${defaultError.message}`,
-        ].join('\n')
-      )
+      return await chromium.launch({ channel: requestedChannel })
+    } catch (error) {
+      channelError = error
     }
+  }
+
+  try {
+    return await chromium.launch()
+  } catch (defaultError) {
+    throw new Error(
+      [
+        'Could not launch Playwright Chromium.',
+        'Run `pnpm exec playwright install chromium` or set PLAYWRIGHT_CHANNEL to an installed channel.',
+        channelError ? `Channel ${requestedChannel}: ${channelError.message}` : '',
+        `Bundled Chromium: ${defaultError.message}`,
+      ]
+        .filter(Boolean)
+        .join('\n')
+    )
   }
 }
 
-async function addOverlay(page, title, body, extra = '') {
-  await page.evaluate(
-    ({ title, body, extra }) => {
-      document.querySelectorAll('[data-pittiquita-demo-overlay]').forEach((node) => node.remove())
+async function configureNetworkIsolation(context) {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'], {
+    origin: baseUrl,
+  })
+  await context.route('**/*', async (route) => {
+    const requestUrl = route.request().url()
 
-      const overlay = document.createElement('div')
-      overlay.dataset.pittiquitaDemoOverlay = 'true'
-      overlay.innerHTML = `
-        <div class="pittiquita-demo-label">${title}</div>
-        <div class="pittiquita-demo-body">${body}</div>
-        ${extra ? `<div class="pittiquita-demo-extra">${extra}</div>` : ''}
-      `
-
-      Object.assign(overlay.style, {
-        position: 'fixed',
-        top: '20px',
-        left: '20px',
-        zIndex: '999999',
-        width: 'min(560px, calc(100vw - 40px))',
-        boxSizing: 'border-box',
-        padding: '16px 18px',
-        border: '1px solid rgba(15, 23, 42, 0.14)',
-        borderRadius: '12px',
-        background: 'rgba(255, 255, 255, 0.96)',
-        boxShadow: '0 18px 45px rgba(15, 23, 42, 0.16)',
-        color: '#0f172a',
-        fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-      })
-
-      const style = document.createElement('style')
-      style.dataset.pittiquitaDemoOverlay = 'true'
-      style.textContent = `
-        .pittiquita-demo-label {
-          font-size: 12px;
-          font-weight: 800;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: #4f46e5;
-          margin-bottom: 6px;
-        }
-        .pittiquita-demo-body {
-          font-size: 18px;
-          font-weight: 700;
-          line-height: 1.25;
-        }
-        .pittiquita-demo-extra {
-          margin-top: 10px;
-          padding: 10px 12px;
-          border-radius: 8px;
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
-          color: #334155;
-          font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-          font-size: 12px;
-          overflow-wrap: anywhere;
-        }
-      `
-
-      document.head.appendChild(style)
-      document.body.appendChild(overlay)
-    },
-    { title, body, extra }
-  )
-}
-
-async function renderFigmaMock(page, captureUrl) {
-  await page.setContent(
-    `<!doctype html>
-    <html lang="en">
-      <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>HTML to Design import step</title>
-        <style>
-          :root {
-            color-scheme: light;
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            color: #111827;
-            background: #f5f7fb;
-          }
-          * { box-sizing: border-box; }
-          body {
-            margin: 0;
-            min-height: 100vh;
-            display: grid;
-            grid-template-columns: 280px minmax(0, 1fr) 380px;
-            background:
-              linear-gradient(90deg, rgba(15, 23, 42, 0.05) 1px, transparent 1px),
-              linear-gradient(rgba(15, 23, 42, 0.05) 1px, transparent 1px),
-              #f8fafc;
-            background-size: 24px 24px;
-          }
-          aside {
-            background: #ffffff;
-            border-right: 1px solid #e5e7eb;
-            padding: 20px;
-          }
-          main {
-            padding: 40px;
-            display: grid;
-            place-items: center;
-          }
-          .canvas {
-            width: min(720px, 100%);
-            aspect-ratio: 4 / 3;
-            background: white;
-            border: 1px solid #dbe3ef;
-            box-shadow: 0 24px 80px rgba(15, 23, 42, 0.12);
-            padding: 34px;
-            display: grid;
-            gap: 18px;
-            align-content: start;
-          }
-          .node {
-            border: 1px solid #c7d2fe;
-            background: #eef2ff;
-            border-radius: 10px;
-            padding: 18px;
-          }
-          .row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 14px;
-          }
-          .panel {
-            background: #ffffff;
-            border-left: 1px solid #e5e7eb;
-            padding: 22px;
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-          }
-          .plugin-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 800;
-          }
-          .plugin-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            background: #111827;
-            color: white;
-            display: grid;
-            place-items: center;
-            font-weight: 800;
-          }
-          .field {
-            border: 1px solid #cbd5e1;
-            border-radius: 10px;
-            padding: 12px;
-            color: #334155;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-            font-size: 12px;
-            overflow-wrap: anywhere;
-            background: #f8fafc;
-          }
-          .button {
-            border: 0;
-            border-radius: 10px;
-            background: #4f46e5;
-            color: white;
-            padding: 12px 14px;
-            text-align: center;
-            font-weight: 800;
-          }
-          .note {
-            color: #64748b;
-            font-size: 13px;
-            line-height: 1.5;
-          }
-          h1, h2, p { margin: 0; }
-          h1 { font-size: 22px; }
-          h2 { font-size: 14px; color: #475569; }
-        </style>
-      </head>
-      <body>
-        <aside>
-          <h2>Local demonstration</h2>
-          <p class="note" style="margin-top: 10px;">
-            This screen is an honest mock of the Figma plugin step. It does not require a Figma login.
-          </p>
-        </aside>
-        <main>
-          <div class="canvas">
-            <div class="node">
-              <h1>Imported localhost component</h1>
-              <p class="note" style="margin-top: 8px;">HTML to Design recreates the selected page or region as editable Figma layers.</p>
-            </div>
-            <div class="row">
-              <div class="node">Hero</div>
-              <div class="node">Stats cards</div>
-              <div class="node">Event log</div>
-            </div>
-          </div>
-        </main>
-        <section class="panel">
-          <div class="plugin-title">
-            <div class="plugin-icon">H</div>
-            <div>
-              <h1>HTML to Design</h1>
-              <p class="note">Import from URL</p>
-            </div>
-          </div>
-          <div>
-            <h2>Paste the pittiquita capture URL</h2>
-            <div class="field">${captureUrl}</div>
-          </div>
-          <div class="button">Import</div>
-          <p class="note">
-            Illustrative step: in a real workflow, paste this URL into the Figma community plugin.
-          </p>
-        </section>
-      </body>
-    </html>`
-  )
-}
-
-async function main() {
-  await mkdir(outputDir, { recursive: true })
-
-  const server = startPlayground()
-  let browser
-
-  try {
-    await waitForServer(baseUrl)
-    browser = await launchBrowser()
-
-    const page = await browser.newPage({ viewport: { width: 1365, height: 900 } })
-    await page.route('https://mcp.figma.com/**', (route) =>
-      route.fulfill({
+    if (requestUrl === captureScriptUrl) {
+      await route.fulfill({
         status: 200,
         contentType: 'application/javascript',
         body: 'window.__pittiquitaDemoCaptureLoaded = true;',
       })
-    )
+      return
+    }
 
-    await page.goto(baseUrl, { waitUntil: 'networkidle' })
-    await page.locator('[data-figma-helper="true"]').waitFor()
-    await addOverlay(
-      page,
-      'Step 1 - localhost',
-      'Open the app in development. The pittiquita capture panel appears only on localhost.'
-    )
-    await page.screenshot({
-      path: path.join(outputDir, '01-localhost-panel.png'),
-      ...screenshotOptions,
-    })
+    const url = new URL(requestUrl)
+    if (url.origin === baseUrl) {
+      await route.continue()
+      return
+    }
 
-    await page.getByRole('button', { name: 'Activate capture' }).click()
-    await page.waitForFunction(() => window.location.hash.includes('figmacapture='))
-    await addOverlay(
-      page,
-      'Step 2 - activate capture',
-      'The URL receives the capture hash and the page is ready for the Figma HTML to Design script.'
-    )
-    await page.screenshot({
-      path: path.join(outputDir, '02-capture-active.png'),
-      ...screenshotOptions,
-    })
+    await route.abort('blockedbyclient')
+  })
+}
 
-    const captureUrl = page.url()
-    await addOverlay(
-      page,
-      'Step 3 - copy URL',
-      'Copy the full localhost URL, including the hash, and use it as the import source.',
-      captureUrl
-    )
-    await page.screenshot({
-      path: path.join(outputDir, '03-copy-url.png'),
-      ...screenshotOptions,
-    })
+async function showOverlay(
+  page,
+  { eyebrow, title, detail = '', copyValue = '' }
+) {
+  await page.evaluate(
+    ({ eyebrow, title, detail, copyValue }) => {
+      document
+        .querySelectorAll('[data-pittiquita-demo-overlay]')
+        .forEach((node) => node.remove())
 
-    await renderFigmaMock(page, captureUrl)
-    await page.screenshot({
-      path: path.join(outputDir, '04-figma-import-step.png'),
-      ...screenshotOptions,
-    })
+      const style = document.createElement('style')
+      style.dataset.pittiquitaDemoOverlay = 'true'
+      style.textContent = `
+        .pittiquita-demo-overlay {
+          position: fixed;
+          top: 18px;
+          left: 18px;
+          z-index: 999999;
+          width: min(560px, calc(100vw - 36px));
+          box-sizing: border-box;
+          padding: 15px 17px;
+          border: 1px solid rgba(15, 23, 42, 0.14);
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.97);
+          box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
+          color: #0f172a;
+          font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        .pittiquita-demo-eyebrow {
+          color: #4f46e5;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .pittiquita-demo-title { margin-top: 5px; font-size: 18px; font-weight: 750; line-height: 1.25; }
+        .pittiquita-demo-detail { margin-top: 7px; color: #475569; font-size: 13px; line-height: 1.4; }
+        .pittiquita-demo-copy-row { display: flex; gap: 8px; margin-top: 10px; }
+        .pittiquita-demo-url {
+          min-width: 0;
+          flex: 1;
+          overflow: hidden;
+          padding: 9px 10px;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          background: #f8fafc;
+          color: #334155;
+          font: 11px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .pittiquita-demo-copy {
+          border: 0;
+          border-radius: 8px;
+          background: #4f46e5;
+          color: white;
+          cursor: pointer;
+          padding: 0 14px;
+          font-weight: 800;
+        }
+      `
 
-    await writeFile(
-      path.join(outputDir, 'README.md'),
-      `# Demo visual do pittiquita
+      const overlay = document.createElement('section')
+      overlay.className = 'pittiquita-demo-overlay'
+      overlay.dataset.pittiquitaDemoOverlay = 'true'
 
-Esta pasta contem um walkthrough visual curto gerado com Playwright para o fluxo do pittiquita:
+      const eyebrowNode = document.createElement('div')
+      eyebrowNode.className = 'pittiquita-demo-eyebrow'
+      eyebrowNode.textContent = eyebrow
+      overlay.appendChild(eyebrowNode)
 
-1. \`01-localhost-panel.png\` - o playground rodando em localhost com o painel de captura visivel.
-2. \`02-capture-active.png\` - modo de captura apos clicar em \`Activate capture\`.
-3. \`03-copy-url.png\` - URL completa com \`#figmacapture=manual\` pronta para copiar.
-4. \`04-figma-import-step.png\` - mock local ilustrativo mostrando onde a URL e colada no plugin HTML to Design do Figma.
+      const titleNode = document.createElement('div')
+      titleNode.className = 'pittiquita-demo-title'
+      titleNode.textContent = title
+      overlay.appendChild(titleNode)
 
-A ultima tela e intencionalmente um mock. Ela evita exigir login no Figma ou uma sessao real do plugin, mas documenta o passo de handoff com honestidade.
+      if (detail) {
+        const detailNode = document.createElement('div')
+        detailNode.className = 'pittiquita-demo-detail'
+        detailNode.textContent = detail
+        overlay.appendChild(detailNode)
+      }
 
-**Idioma:** Portugues (padrao) | [English](./README.en.md)
+      if (copyValue) {
+        const row = document.createElement('div')
+        row.className = 'pittiquita-demo-copy-row'
+        const urlNode = document.createElement('div')
+        urlNode.className = 'pittiquita-demo-url'
+        urlNode.textContent = copyValue
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.className = 'pittiquita-demo-copy'
+        button.dataset.pittiquitaDemoCopy = 'true'
+        button.textContent = 'Copy URL'
+        button.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(copyValue)
+            button.textContent = 'Copied'
+          } catch {
+            button.textContent = 'Copy shown'
+          }
+        })
+        row.append(urlNode, button)
+        overlay.appendChild(row)
+      }
 
-## Regenerar
+      document.head.appendChild(style)
+      document.body.appendChild(overlay)
+    },
+    { eyebrow, title, detail, copyValue }
+  )
+}
 
-\`\`\`bash
-pnpm build
-pnpm --dir playground install
-pnpm run demo:capture
-\`\`\`
+async function runTimeline(page, screenshotPaths, recording) {
+  const pause = (milliseconds) => recording ? wait(milliseconds) : Promise.resolve()
 
-Se o Playwright nao encontrar um navegador local, rode:
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' })
+  await page.locator('[data-figma-helper="true"]').waitFor()
+  await showOverlay(page, {
+    eyebrow: 'Step 1 · localhost',
+    title: 'Open the local app and inspect the marked regions.',
+    detail: 'The pittiquita panel is available only during local development.',
+  })
+  await page.screenshot({ path: screenshotPaths[0], animations: 'disabled' })
+  await pause(1500)
 
-\`\`\`bash
-pnpm exec playwright install chromium
-\`\`\`
-`,
-      'utf8'
-    )
-    await writeFile(
-      path.join(outputDir, 'README.en.md'),
-      `# pittiquita visual demo
+  await showOverlay(page, {
+    eyebrow: 'Step 2 · choose a region',
+    title: 'Select the Hero region from the capture panel.',
+    detail: 'pittiquita discovers data-figma-target regions in the live page.',
+  })
+  const heroRegion = page.getByRole('button', { name: 'Hero', exact: true })
+  await heroRegion.hover()
+  await pause(450)
+  await heroRegion.click()
+  await showOverlay(page, {
+    eyebrow: 'Step 2 · region selected',
+    title: 'The Hero region is selected and visible in the page.',
+    detail: 'Captured immediately after pittiquita navigates to the named target.',
+  })
+  await page.screenshot({ path: screenshotPaths[1], animations: 'disabled' })
+  await pause(1100)
 
-This folder contains a short Playwright-generated visual walkthrough of the pittiquita flow:
+  await showOverlay(page, {
+    eyebrow: 'Step 3 · activate capture',
+    title: 'Activate capture for the current localhost page.',
+  })
+  const activateButton = page.getByRole('button', {
+    name: 'Activate capture',
+    exact: true,
+  })
+  await activateButton.hover()
+  await pause(350)
+  await activateButton.click()
+  await page.waitForFunction(() => window.location.hash.includes('figmacapture='))
+  await showOverlay(page, {
+    eyebrow: 'Step 3 · capture active',
+    title: 'The capture hash is now part of the local URL.',
+    detail: 'The external capture script is intercepted with a local no-op during this demo.',
+  })
+  await page.screenshot({ path: screenshotPaths[2], animations: 'disabled' })
+  await pause(1400)
 
-1. \`01-localhost-panel.png\` - the playground running on localhost with the capture panel visible.
-2. \`02-capture-active.png\` - capture mode after clicking \`Activate capture\`.
-3. \`03-copy-url.png\` - the full URL with \`#figmacapture=manual\` ready to copy.
-4. \`04-figma-import-step.png\` - an illustrative local mock showing where the URL is pasted in Figma's HTML to Design plugin.
+  const captureUrl = page.url()
+  await showOverlay(page, {
+    eyebrow: 'Step 4 · demo overlay · browser copy',
+    title: 'Copy the complete localhost URL for the handoff.',
+    detail: 'This temporary demo control uses the browser clipboard. It is not a pittiquita product feature.',
+    copyValue: captureUrl,
+  })
+  await page.screenshot({ path: screenshotPaths[3], animations: 'disabled' })
+  await pause(500)
+  const copyButton = page.locator('[data-pittiquita-demo-copy="true"]')
+  await copyButton.hover()
+  await copyButton.click()
+  await pause(1400)
 
-The last screen is intentionally a mock. It avoids requiring a Figma login or a real plugin session while still documenting the handoff step accurately.
+  await page.setContent(renderFigmaMockHtml(captureUrl))
+  await page.getByText(FIGMA_MOCK_LABEL, { exact: true }).waitFor()
+  await page.getByText(FIGMA_MOCK_NOTE, { exact: true }).waitFor()
+  await page.screenshot({ path: screenshotPaths[4], animations: 'disabled' })
+  await pause(3000)
+}
 
-**Language:** [Portugues (default)](./README.md) | English
+async function copyGeneratedFiles(sourceFiles, destinationFiles) {
+  await mkdir(outputPaths.outputDir, { recursive: true })
 
-## Regenerate
+  for (let index = 0; index < sourceFiles.length; index += 1) {
+    await copyFile(sourceFiles[index], destinationFiles[index])
+  }
+}
 
-\`\`\`bash
-pnpm build
-pnpm --dir playground install
-pnpm run demo:capture
-\`\`\`
+async function recordFromVersionedScreenshots(tempDir) {
+  await assertMediaTools()
+  const tempVideo = path.join(tempDir, DEMO_VIDEO)
+  const tempGif = path.join(tempDir, DEMO_GIF)
 
-If Playwright cannot find a local browser, run:
+  console.log('Using the explicit screenshot fallback; Chromium is not being launched.')
+  await createVideoFromScreenshots(outputPaths.screenshots, tempVideo)
+  await createGifFromVideo(tempVideo, tempGif)
+  await copyGeneratedFiles(
+    [tempVideo, tempGif],
+    [outputPaths.video, outputPaths.gif]
+  )
+}
 
-\`\`\`bash
-pnpm exec playwright install chromium
-\`\`\`
-`,
-      'utf8'
-    )
-  } catch (error) {
-    const logs = server.getLogs()
-    throw new Error(`${error.message}\n\nPlayground logs:\n${logs}`)
+async function captureWithPlaywright({ mode, tempDir, cleanup }) {
+  const recording = mode === 'record'
+  if (recording) await assertMediaTools()
+
+  const tempScreenshots = DEMO_SCREENSHOTS.map((fileName) =>
+    path.join(tempDir, fileName)
+  )
+  const server = startPlayground()
+  cleanup.add(() => server.stop())
+
+  const readinessController = new AbortController()
+  try {
+    await Promise.race([
+      waitForServer(baseUrl, { signal: readinessController.signal }),
+      server.exited.then(({ code, signal }) => {
+        readinessController.abort(new Error('Playground exited'))
+        throw new Error(
+          `Playground exited before becoming ready (${code ?? signal ?? 'unknown status'}).\n${server.getLogs()}`
+        )
+      }),
+    ])
   } finally {
-    if (browser) await browser.close()
-    await server.stop()
+    readinessController.abort(new Error('Playground readiness resolved'))
+  }
+
+  const browser = await launchBrowser()
+  let browserClosed = false
+  cleanup.add(async () => {
+    if (!browserClosed) await browser.close()
+  })
+
+  const context = await browser.newContext({
+    viewport: VIDEO_SIZE,
+    recordVideo: recording
+      ? { dir: tempDir, size: VIDEO_SIZE }
+      : undefined,
+  })
+  let contextClosed = false
+  cleanup.add(async () => {
+    if (!contextClosed) await context.close()
+  })
+  await configureNetworkIsolation(context)
+
+  const page = await context.newPage()
+  const rawVideo = recording ? page.video() : undefined
+  await runTimeline(page, tempScreenshots, recording)
+  await page.close()
+  await context.close()
+  contextClosed = true
+
+  const generatedFiles = [...tempScreenshots]
+  const destinationFiles = [...outputPaths.screenshots]
+
+  if (recording) {
+    const rawVideoPath = path.join(tempDir, 'playwright-raw.webm')
+    const tempVideo = path.join(tempDir, DEMO_VIDEO)
+    const tempGif = path.join(tempDir, DEMO_GIF)
+
+    await rawVideo.saveAs(rawVideoPath)
+    await normalizeRecordedVideo(rawVideoPath, tempVideo)
+    await createGifFromVideo(tempVideo, tempGif)
+    generatedFiles.push(tempVideo, tempGif)
+    destinationFiles.push(outputPaths.video, outputPaths.gif)
+  }
+
+  await browser.close()
+  browserClosed = true
+  await copyGeneratedFiles(generatedFiles, destinationFiles)
+}
+
+function installSignalCleanup(cleanup) {
+  let handlingSignal = false
+  const handlers = new Map()
+
+  for (const [signal, exitCode] of [
+    ['SIGINT', 130],
+    ['SIGTERM', 143],
+  ]) {
+    const handler = () => {
+      if (handlingSignal) return
+      handlingSignal = true
+      console.error(`Received ${signal}; cleaning up the demo process...`)
+      cleanup
+        .run()
+        .catch((error) => console.error(error.message))
+        .finally(() => process.exit(exitCode))
+    }
+    handlers.set(signal, handler)
+    process.once(signal, handler)
+  }
+
+  return () => {
+    for (const [signal, handler] of handlers) process.off(signal, handler)
+  }
+}
+
+async function main() {
+  const options = parseCommandLine(process.argv.slice(2))
+  const cleanup = createCleanupStack()
+  const removeSignalHandlers = installSignalCleanup(cleanup)
+  const tempDir = await mkdtemp(path.join(tmpdir(), 'pittiquita-demo-'))
+  cleanup.add(() => rm(tempDir, { recursive: true, force: true }))
+  let primaryError
+
+  try {
+    if (options.fromScreenshots) {
+      await recordFromVersionedScreenshots(tempDir)
+    } else {
+      await captureWithPlaywright({
+        mode: options.mode,
+        tempDir,
+        cleanup,
+      })
+    }
+
+    if (options.mode === 'record') {
+      const report = await validateDemoArtifacts(rootDir)
+      console.log(formatValidationReport(report))
+    } else {
+      console.log(`Captured ${DEMO_SCREENSHOTS.length} screenshots in docs/demo.`)
+    }
+  } catch (error) {
+    primaryError = error
+    throw error
+  } finally {
+    removeSignalHandlers()
+    try {
+      await cleanup.run()
+    } catch (cleanupError) {
+      if (primaryError) {
+        console.error(`Cleanup also failed: ${cleanupError.message}`)
+      } else {
+        throw cleanupError
+      }
+    }
   }
 }
 
 main().catch((error) => {
-  console.error(error)
-  process.exit(1)
+  console.error(error.message)
+  process.exitCode = 1
 })
