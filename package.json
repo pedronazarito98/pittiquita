@@ -74,7 +74,9 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsup",
-    "demo:capture": "node scripts/capture-demo.mjs",
+    "demo:capture": "node scripts/capture-demo.mjs --screenshots",
+    "demo:record": "node scripts/capture-demo.mjs --record",
+    "demo:check": "node scripts/check-demo.mjs",
     "dev": "tsup --watch",
     "test": "vitest",
     "test:run": "vitest run",

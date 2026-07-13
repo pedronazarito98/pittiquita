@@ -1,0 +1,73 @@
+name: Demo reproduzivel
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/demo.yml'
+      - 'docs/demo/**'
+      - 'package.json'
+      - 'playground/**'
+      - 'scripts/capture-demo.mjs'
+      - 'scripts/check-demo.mjs'
+      - 'scripts/demo/**'
+      - 'tests/demo/**'
+
+permissions:
+  contents: read
+
+jobs:
+  regenerate:
+    name: Regenerar e inspecionar demo
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Baixar codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Instalar dependencias do pacote
+        run: pnpm install --frozen-lockfile
+
+      - name: Instalar dependencias do playground
+        run: pnpm --dir playground install --frozen-lockfile
+
+      - name: Instalar Chromium e dependencias do sistema
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Configurar ffmpeg
+        shell: bash
+        run: command -v ffmpeg >/dev/null || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+
+      - name: Compilar pacote e playground
+        run: |
+          pnpm build
+          pnpm --dir playground build
+
+      - name: Regenerar demo com Playwright
+        run: pnpm demo:record
+
+      - name: Validar midias regeneradas
+        run: pnpm demo:check
+
+      - name: Enviar midias para inspecao
+        uses: actions/upload-artifact@v4
+        with:
+          name: pittiquita-demo-${{ github.run_id }}
+          path: |
+            docs/demo/*.png
+            docs/demo/*.gif
+            docs/demo/*.webm
+          if-no-files-found: error
+          retention-days: 14

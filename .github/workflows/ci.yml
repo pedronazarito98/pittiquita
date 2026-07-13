@@ -35,6 +35,13 @@ jobs:
       - name: Testes
         run: pnpm test:run
 
+      - name: Configurar ffmpeg para validar a demo
+        shell: bash
+        run: command -v ffmpeg >/dev/null || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+
+      - name: Validar artefatos da demo
+        run: pnpm demo:check
+
       - name: Typecheck
         run: pnpm typecheck
 
