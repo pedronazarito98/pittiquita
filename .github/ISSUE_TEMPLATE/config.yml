@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Private security report
+    url: https://github.com/pedronazarito98/pittiquita/security/advisories/new
+    about: Report vulnerabilities privately. Do not disclose security details in a public issue.
+  - name: Usage guides
+    url: https://github.com/pedronazarito98/pittiquita/tree/main/docs/guides
+    about: Check the React, Vite, Next.js, targets, and headless-hooks guides before opening an issue.
