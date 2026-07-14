@@ -2,63 +2,94 @@ name: Publicar no npm
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*.*.*'
 
 permissions:
   contents: read
   id-token: write
 
+concurrency:
+  group: npm-pittiquita
+  cancel-in-progress: false
+
 jobs:
   publish:
-    name: Publicar pacote
+    name: Validar tag e publicar pacote
     runs-on: ubuntu-latest
-
-    if: "!contains(github.event.head_commit.message, '[skip publish]')"
+    timeout-minutes: 15
 
     steps:
-      - name: Baixar codigo
-        uses: actions/checkout@v4
+      - name: Baixar codigo da tag
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Configurar pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 10
 
-      - name: Configurar Node
-        uses: actions/setup-node@v4
+      - name: Configurar Node e npm
+        uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            playground/pnpm-lock.yaml
           registry-url: https://registry.npmjs.org
 
-      - name: Atualizar npm
-        run: npm install -g npm@latest
+      - name: Atualizar npm para Trusted Publishing
+        run: npm install --global 'npm@>=11.5.1'
 
-      - name: Instalar dependencias
+      - name: Instalar dependencias do pacote
         run: pnpm install --frozen-lockfile
+
+      - name: Instalar dependencias do playground
+        run: pnpm --dir playground install --frozen-lockfile
+
+      - name: Conferir tag e versao do manifesto
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+
+          if [[ "$TAG_VERSION" != "$PACKAGE_VERSION" ]]; then
+            echo "A tag v$TAG_VERSION nao corresponde ao package.json ($PACKAGE_VERSION)."
+            exit 1
+          fi
 
       - name: Validar pacote
         run: pnpm validate
 
+      - name: Validar playground consumidor
+        run: |
+          pnpm build
+          pnpm --dir playground build
+
+      - name: Configurar ffmpeg para validar a demo
+        shell: bash
+        run: command -v ffmpeg >/dev/null || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+
+      - name: Validar artefatos da demo
+        run: pnpm demo:check
+
       - name: Conferir conteudo do pacote
         run: npm pack --dry-run
 
-      - name: Conferir se a versao ja existe no npm
-        id: version
+      - name: Impedir republicacao da mesma versao
         shell: bash
         run: |
-          PACKAGE_NAME=$(node -p "require('./package.json').name")
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          set -euo pipefail
+          PACKAGE_NAME="$(node -p "require('./package.json').name")"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
 
-          if npm view "$PACKAGE_NAME@$PACKAGE_VERSION" version > /dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "Version $PACKAGE_VERSION already exists on npm. Skipping publish."
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-            echo "Version $PACKAGE_VERSION does not exist on npm. Publishing."
+          if npm view "$PACKAGE_NAME@$PACKAGE_VERSION" version >/dev/null 2>&1; then
+            echo "A versao $PACKAGE_NAME@$PACKAGE_VERSION ja existe no npm."
+            exit 1
           fi
 
-      - name: Publicar no npm
-        if: steps.version.outputs.exists == 'false'
-        run: npm publish --access public
+      - name: Publicar no npm com proveniencia
+        run: npm publish --access public --provenance
