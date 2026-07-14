@@ -1,59 +1,97 @@
 # Release
 
-Este pacote publica no npm automaticamente pelo GitHub Actions quando um novo commit chega na branch `main`.
+O pacote publica no npm somente quando uma tag semantica no formato `vX.Y.Z` e enviada ao GitHub. Merges comuns em `main` nao disparam publicacao.
 
-## Publicacao recomendada com Trusted Publishing
+## Publicacao com Trusted Publishing
 
-O npm Trusted Publishing e o caminho recomendado, porque permite que o GitHub Actions publique via OIDC sem armazenar um `NPM_TOKEN` de longa duracao.
+O workflow usa npm Trusted Publishing por OIDC, sem `NPM_TOKEN` de longa duracao.
 
-Para habilitar:
+Configure uma unica vez no pacote `pittiquita` no npm:
 
-1. Abra o pacote `pittiquita` no npm.
-2. Va em Settings -> Trusted publishing.
-3. Escolha GitHub Actions como provider.
-4. Configure:
+1. Abra **Settings -> Trusted publishing**.
+2. Escolha **GitHub Actions** como provider.
+3. Configure:
    - Organization or user: `pedronazarito98`
    - Repository: `pittiquita`
    - Workflow filename: `publish.yml`
-   - Allowed actions: `npm publish`
-5. Salve a configuracao.
+   - Allowed action: `npm publish`
+4. Salve a configuracao.
 
-O workflow de publicacao usa `id-token: write`, Node.js 22 e npm CLI atualizado para permitir que o npm autentique a publicacao por OIDC.
+O workflow concede somente `contents: read` e `id-token: write`, usa Node.js 22 e atualiza o npm CLI para uma versao compativel com OIDC.
 
-Depois disso, nao e necessario criar nem manter `NPM_TOKEN` no GitHub.
+## Checklist de release
 
-## Fluxo de publicacao
+1. Garanta que a branch `main` esta verde e contem exatamente o codigo que sera publicado.
+2. Atualize `version` no `package.json` seguindo Semantic Versioning.
+3. Atualize a secao `Unreleased` do `CHANGELOG.md` e registre a versao/data.
+4. Abra e aprove um pull request de release.
+5. Depois do merge, crie uma tag exatamente igual a versao do manifesto:
 
-1. Atualize a `version` no `package.json` para uma versao ainda nao publicada.
-2. Abra um pull request.
-3. Faca merge na `main`.
-4. O workflow roda `pnpm validate`.
-5. O workflow confere o conteudo com `npm pack --dry-run`.
-6. O workflow verifica se a mesma versao ja existe no npm.
-7. Se a versao for nova, o workflow publica com `npm publish --access public`.
+```bash
+git switch main
+git pull --ff-only
+git tag -a v0.2.0 -m "release: v0.2.0"
+git push origin v0.2.0
+```
 
-Para fazer merge sem publicar, inclua `[skip publish]` na mensagem do commit de merge.
+6. Acompanhe o workflow **Publicar no npm**.
+7. Confirme no npm que a versao, arquivos e proveniencia foram publicados corretamente.
 
-## Erro EOTP
+## Gates executados antes da publicacao
 
-Se o GitHub Actions falhar com `npm error code EOTP`, o npm esta exigindo um codigo de 2FA para publicar.
+O workflow interrompe a release quando qualquer gate falha:
 
-Isso normalmente acontece quando o workflow usa `NPM_TOKEN` e o token nao tem bypass de 2FA. Trusted Publishing corrige esse problema porque troca o token por autenticacao OIDC de curta duracao.
+- tag fora do formato `vX.Y.Z`;
+- tag diferente de `package.json#version`;
+- instalacao congelada do pacote ou playground inconsistente;
+- lint, testes, typecheck ou build com erro;
+- playground consumidor sem build;
+- artefatos versionados da demo invalidos;
+- tarball npm inesperado;
+- versao ja existente no npm.
 
-Se for necessario continuar com token em vez de Trusted Publishing, crie no npm um granular access token com permissao de publicacao para `pittiquita` e bypass de 2FA habilitado. Depois substitua o valor do secret `NPM_TOKEN` no GitHub. Nunca commite tokens do npm, nunca coloque tokens de publicacao em um arquivo `.env` versionado e nunca imprima tokens em logs.
+A publicacao final usa:
 
-## Requisitos do Trusted Publishing
+```bash
+npm publish --access public --provenance
+```
 
-O npm exige npm CLI 11.5.1 ou mais novo e Node.js 22.14.0 ou mais novo para Trusted Publishing.
+## Por que a publicacao nao ocorre em todo merge
 
-O trusted publisher precisa apontar exatamente para:
+Publicar em cada push de `main` mistura integracao continua com release e torna um bump acidental de versao suficiente para publicar. A tag explicita cria um ponto auditavel, permite revisar o changelog e garante que a versao declarada corresponde ao artefato publicado.
+
+## Falhas comuns
+
+### A tag nao corresponde ao manifesto
+
+Exemplo: tag `v0.2.0` com `package.json` em `0.1.7`. Exclua a tag incorreta somente se ela ainda nao representar uma release publica, corrija o manifesto e crie uma nova tag valida. Nunca mova silenciosamente uma tag que ja foi consumida por terceiros.
+
+### A versao ja existe no npm
+
+Versoes npm sao imutaveis. Incremente `patch`, `minor` ou `major`, atualize o changelog e crie uma nova tag.
+
+### Erro EOTP ou autenticacao
+
+Confirme que o Trusted Publisher aponta exatamente para:
 
 - Repositorio: `pedronazarito98/pittiquita`
-- Arquivo de workflow: `publish.yml`
-- Caminho no repositorio: `.github/workflows/publish.yml`
+- Workflow: `.github/workflows/publish.yml`
 
-Referencias:
+Nao adicione tokens ao repositorio, arquivos `.env`, logs ou descricoes de PR. Se OIDC nao estiver disponivel, um token granular com escopo minimo e bypass de 2FA pode ser usado como contingencia temporaria, mas exige uma mudanca revisada no workflow.
+
+## Rollback
+
+Uma versao publicada nao pode ser sobrescrita. Para corrigir uma release:
+
+1. reverta ou corrija o codigo em um novo PR;
+2. incremente a versao;
+3. documente a correcao no changelog;
+4. publique uma nova tag.
+
+Use `npm deprecate` apenas quando consumidores precisarem ser alertados sobre uma versao defeituosa. Evite `unpublish`, pois ele quebra instalacoes reproduziveis e possui restricoes do npm.
+
+## Referencias
 
 - npm Trusted Publishing: https://docs.npmjs.com/trusted-publishers/
-- npm trust CLI: https://docs.npmjs.com/cli/v11/commands/npm-trust/
-- Guia do GitHub para publicacao no npm: https://docs.github.com/en/actions/tutorials/publish-packages/publish-nodejs-packages
+- npm provenance: https://docs.npmjs.com/generating-provenance-statements/
+- GitHub Actions para pacotes Node.js: https://docs.github.com/actions/publishing-packages/publishing-nodejs-packages
