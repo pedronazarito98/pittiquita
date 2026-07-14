@@ -14,7 +14,7 @@ const RESOLVED_VIRTUAL_MODULE_ID = '\0' + VIRTUAL_MODULE_ID
 export function pittiquita(options: PittiquitaViteOptions = {}): Plugin {
   return {
     name: 'pittiquita',
-    apply: 'serve', // só em dev
+    apply: 'serve',
 
     resolveId(id) {
       if (id === VIRTUAL_MODULE_ID) return RESOLVED_VIRTUAL_MODULE_ID
@@ -24,7 +24,7 @@ export function pittiquita(options: PittiquitaViteOptions = {}): Plugin {
       if (id !== RESOLVED_VIRTUAL_MODULE_ID) return
 
       const propsJson = JSON.stringify(options, (_, value) => {
-        // funções (como regionsCount) não serializam; usar defaults
+        // Funções não serializam no módulo virtual; usar montagem manual nesses casos.
         if (typeof value === 'function') return undefined
         return value
       })
@@ -37,12 +37,26 @@ export function pittiquita(options: PittiquitaViteOptions = {}): Plugin {
         import { createRoot } from 'react-dom/client'
         import { FigmaCapturePanel } from 'pittiquita'
 
-        const container = document.createElement('div')
-        container.id = 'pittiquita-root'
-        document.body.appendChild(container)
+        const ROOT_ID = 'pittiquita-root'
+        const existingContainer = document.getElementById(ROOT_ID)
+        const container = existingContainer ?? document.createElement('div')
 
-        const root = createRoot(container)
+        if (!existingContainer) {
+          container.id = ROOT_ID
+          document.body.appendChild(container)
+        }
+
+        const previousRoot = container.__pittiquitaRoot
+        const root = previousRoot ?? createRoot(container)
+        container.__pittiquitaRoot = root
         root.render(createElement(FigmaCapturePanel, ${propsJson}))
+
+        if (import.meta.hot) {
+          import.meta.hot.dispose(() => {
+            root.unmount()
+            container.remove()
+          })
+        }
       `
     },
 
