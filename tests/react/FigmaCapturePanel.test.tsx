@@ -23,9 +23,13 @@ describe('FigmaCapturePanel', () => {
     expect(container.innerHTML).toBe('')
   })
 
-  it('renders panel on localhost', () => {
+  it('renders panel on localhost with an accessible landmark', () => {
     render(<FigmaCapturePanel />)
+
     expect(screen.getByText('Figma Capture')).toBeTruthy()
+    expect(
+      screen.getByRole('complementary', { name: 'Figma Capture' })
+    ).toBeTruthy()
   })
 
   it('applies custom labels', () => {
@@ -44,6 +48,45 @@ describe('FigmaCapturePanel', () => {
     expect(screen.getByText('Figma Capture')).toBeTruthy()
   })
 
+  it('hides the panel with Escape', () => {
+    render(<FigmaCapturePanel />)
+
+    fireEvent.keyDown(
+      screen.getByRole('complementary', { name: 'Figma Capture' }),
+      { key: 'Escape' }
+    )
+
+    expect(screen.queryByText('Figma Capture')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Figma' })).toBeTruthy()
+  })
+
+  it('announces capture activation', () => {
+    render(<FigmaCapturePanel />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Activate capture' }))
+
+    expect(screen.getByRole('status').textContent).toContain('Capture activated')
+  })
+
+  it('uses custom validation copy and exposes the error accessibly', () => {
+    render(
+      <FigmaCapturePanel
+        labels={{ fileRefInvalid: 'Referencia do arquivo invalida.' }}
+      />
+    )
+
+    fireEvent.change(screen.getByLabelText('Figma URL or fileKey'), {
+      target: { value: '!!invalid!!' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Open file in Figma' }))
+
+    const input = screen.getByLabelText('Figma URL or fileKey')
+    expect(input.getAttribute('aria-invalid')).toBe('true')
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Referencia do arquivo invalida.'
+    )
+  })
+
   it('applies custom className', () => {
     render(<FigmaCapturePanel className="my-custom-class" />)
     const panel = screen.getByText('Figma Capture').closest('[data-figma-helper]')!
@@ -52,7 +95,9 @@ describe('FigmaCapturePanel', () => {
 
   it('applies theme as CSS variables', () => {
     render(<FigmaCapturePanel theme={{ accentColor: '#ff0000' }} />)
-    const panel = screen.getByText('Figma Capture').closest('[data-figma-helper]') as HTMLElement
+    const panel = screen
+      .getByText('Figma Capture')
+      .closest('[data-figma-helper]') as HTMLElement
     expect(panel.style.getPropertyValue('--pittiquita-accent')).toBe('#ff0000')
   })
 })
