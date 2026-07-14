@@ -1,4 +1,13 @@
-import { errorStyle, fileRowStyle, inputStyle, sectionStyle, textTitle, buttonBaseStyle } from '../styles'
+import { useId } from 'react'
+
+import {
+  buttonBaseStyle,
+  errorStyle,
+  fileRowStyle,
+  inputStyle,
+  sectionStyle,
+  textTitle,
+} from '../styles'
 
 type FileRefFieldProps = {
   labels: {
@@ -22,31 +31,44 @@ export function FileRefField({
   onChange,
   onOpen,
 }: FileRefFieldProps) {
+  const inputId = useId()
+  const errorId = `${inputId}-error`
+
   return (
     <div style={sectionStyle} className={className}>
-      <p style={textTitle}>{labels.fileSectionTitle}</p>
+      <label htmlFor={inputId} style={textTitle}>
+        {labels.fileSectionTitle}
+      </label>
       <div style={fileRowStyle}>
         <input
+          id={inputId}
           type="text"
           aria-label={labels.fileRefLabel}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? errorId : undefined}
           style={{
             ...inputStyle,
             ...(error ? { borderColor: '#e53e3e' } : {}),
           }}
           value={value}
           placeholder={labels.fileRefPlaceholder}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(event) => onChange(event.target.value)}
         />
         <button
           type="button"
           style={buttonBaseStyle}
           title={labels.openTooltip}
+          aria-label={labels.openTooltip}
           onClick={onOpen}
         >
           ↗
         </button>
       </div>
-      {error ? <p style={errorStyle}>{error}</p> : null}
+      {error ? (
+        <p id={errorId} role="alert" style={errorStyle}>
+          {error}
+        </p>
+      ) : null}
     </div>
   )
 }

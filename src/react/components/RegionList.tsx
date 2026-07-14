@@ -1,5 +1,15 @@
+import { useId } from 'react'
+
 import type { RegionEntry } from '../../core/types'
-import { buttonAccentStyle, buttonBaseStyle, regionListStyle, sectionStyle, textMuted, textSmall, textTitle } from '../styles'
+import {
+  buttonAccentStyle,
+  buttonBaseStyle,
+  regionListStyle,
+  sectionStyle,
+  textMuted,
+  textSmall,
+  textTitle,
+} from '../styles'
 
 type RegionListProps = {
   labels: {
@@ -20,24 +30,45 @@ export function RegionList({
   className,
   onSelect,
 }: RegionListProps) {
+  const titleId = useId()
+
   return (
     <div style={sectionStyle} className={className}>
-      <p style={textTitle}>{labels.regionsTitle}</p>
-      <p style={textMuted}>{labels.regionsCount(regions.length)}</p>
+      <p id={titleId} style={textTitle}>
+        {labels.regionsTitle}
+      </p>
+      <p style={textMuted} aria-live="polite">
+        {labels.regionsCount(regions.length)}
+      </p>
 
       {regions.length > 0 ? (
-        <div style={regionListStyle}>
+        <ul
+          aria-labelledby={titleId}
+          style={{
+            ...regionListStyle,
+            listStyle: 'none',
+            margin: 0,
+            padding: 0,
+          }}
+        >
           {regions.map((region) => (
-            <button
-              key={region.id}
-              type="button"
-              style={selectedId === region.id ? buttonAccentStyle : buttonBaseStyle}
-              onClick={() => onSelect(region)}
-            >
-              {region.label}
-            </button>
+            <li key={region.id}>
+              <button
+                type="button"
+                aria-pressed={selectedId === region.id}
+                style={{
+                  ...(selectedId === region.id
+                    ? buttonAccentStyle
+                    : buttonBaseStyle),
+                  width: '100%',
+                }}
+                onClick={() => onSelect(region)}
+              >
+                {region.label}
+              </button>
+            </li>
           ))}
-        </div>
+        </ul>
       ) : (
         <p style={textSmall}>{labels.regionsEmpty}</p>
       )}
