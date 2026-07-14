@@ -18,7 +18,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Made English the canonical repository README and preserved a complete Portuguese version.
 - Reframed the first-visit documentation around the product problem, audience, workflow, trust boundary, and verifiable quality evidence.
-- Declared Next.js and Vite as optional peer dependencies for their dedicated entry points.
 - Made the Vite automatic mount idempotent and cleaned it up during hot-module replacement.
 
 ### Deprecated
