@@ -69,13 +69,16 @@ Only provide the tokens you need to change.
 
 ## Label overrides
 
-Labels are merged with defaults, including the nested instruction object:
+Labels are merged with defaults, including the nested instruction object and operational feedback messages:
 
 ```tsx
 <FigmaCapturePanel
   labels={{
     panelTitle: 'Design handoff',
     activateCapture: 'Prepare URL',
+    captureActivated: 'Capture ready. Copy the browser URL.',
+    fileRefInvalid: 'Enter a valid design-file reference.',
+    fileOpened: 'Design file opened.',
     instructions: {
       prefix: 'Import',
       entireScreen: 'the full page',
@@ -87,7 +90,20 @@ Labels are merged with defaults, including the nested instruction object:
 />
 ```
 
+The panel now forwards `fileRefInvalid` and `fileOpened` to the file-reference hook, so custom copy is used consistently in validation errors and success announcements.
+
 `regionsCount` is a function. It works with manual React mounting, but function-valued options are intentionally omitted when Vite serializes plugin options.
+
+## Accessibility behavior
+
+The prebuilt panel provides a complementary landmark named by `panelTitle`, associated labels and errors for the Figma file field, pressed state for selected regions, and polite status announcements for capture activation, file opening, and region selection.
+
+- Press `Escape` while focus is inside the expanded panel to collapse it.
+- The icon-only file action exposes `openTooltip` as its accessible name.
+- Validation errors use `aria-invalid`, `aria-describedby`, and an alert role.
+- Region buttons expose `aria-pressed` and remain keyboard-operable native buttons.
+
+Custom `classNames` should preserve visible focus states and sufficient contrast.
 
 ## Capture-script controls
 
