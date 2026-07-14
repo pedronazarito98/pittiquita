@@ -59,6 +59,7 @@ export function FigmaCapturePanel({
 
   const [helperHidden, setHelperHidden] = useState(false)
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null)
+  const [announcement, setAnnouncement] = useState('')
 
   const ready = useLocalOrigin()
   const { regions, refresh } = useFigmaRegions({
@@ -74,10 +75,13 @@ export function FigmaCapturePanel({
     integrity,
     crossOrigin,
   })
-  const fileRef = useFigmaFileRef()
+  const fileRef = useFigmaFileRef({
+    invalidMessage: labels.fileRefInvalid,
+    openedMessage: labels.fileOpened,
+  })
 
   useEffect(() => {
-    const element = regions.find((r) => r.id === selectedRegionId)?.element
+    const element = regions.find((region) => region.id === selectedRegionId)?.element
     if (!element) return
 
     element.setAttribute(SELECTED_ATTR, 'true')
@@ -91,6 +95,7 @@ export function FigmaCapturePanel({
   const handleReset = useCallback(() => {
     setSelectedRegionId(null)
     setHelperHidden(false)
+    setAnnouncement('')
     fileRef.reset()
     refresh()
   }, [fileRef, refresh])
@@ -98,12 +103,14 @@ export function FigmaCapturePanel({
   const handleActivate = useCallback(() => {
     activate()
     fileRef.clearStatus()
+    setAnnouncement(labels.captureActivated)
     onCaptureActivate?.()
-  }, [activate, fileRef, onCaptureActivate])
+  }, [activate, fileRef, labels.captureActivated, onCaptureActivate])
 
   const handleSelectRegion = useCallback(
     (region: RegionEntry) => {
       setSelectedRegionId(region.id)
+      setAnnouncement(region.label)
       onRegionSelect?.(region)
     },
     [onRegionSelect]
@@ -113,6 +120,14 @@ export function FigmaCapturePanel({
     setSelectedRegionId(null)
     setHelperHidden(true)
   }, [])
+
+  const handleFileRefChange = useCallback(
+    (next: string) => {
+      setAnnouncement('')
+      fileRef.setValue(next)
+    },
+    [fileRef]
+  )
 
   if (!ready) return null
 
@@ -128,12 +143,17 @@ export function FigmaCapturePanel({
   }
 
   const cssVars = theme ? themeToVars(theme) : {}
+  const statusMessage = fileRef.status || announcement
 
   return (
     <aside
       style={{ ...panelStyle(position), ...cssVars } as React.CSSProperties}
       className={className}
       data-figma-helper="true"
+      aria-label={labels.panelTitle}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') handleHide()
+      }}
     >
       <div style={headerStyle} className={classNames?.header}>
         <p style={{ margin: 0, fontSize: '14px', fontWeight: 600 }}>
@@ -148,6 +168,7 @@ export function FigmaCapturePanel({
             fontSize: '12px',
             color: 'var(--pittiquita-text-secondary, #4a5568)',
           }}
+          aria-label={labels.hide}
           onClick={handleHide}
         >
           {labels.hide}
@@ -169,14 +190,26 @@ export function FigmaCapturePanel({
         onReset={handleReset}
       />
 
-      {fileRef.status ? <p style={{ margin: 0, fontSize: '11px', color: 'var(--pittiquita-text-secondary)' }}>{fileRef.status}</p> : null}
+      {statusMessage ? (
+        <p
+          role="status"
+          aria-live="polite"
+          style={{
+            margin: 0,
+            fontSize: '11px',
+            color: 'var(--pittiquita-text-secondary)',
+          }}
+        >
+          {statusMessage}
+        </p>
+      ) : null}
 
       <FileRefField
         labels={labels}
         value={fileRef.value}
         error={fileRef.error}
         className={classNames?.fileField}
-        onChange={fileRef.setValue}
+        onChange={handleFileRefChange}
         onOpen={fileRef.openExistingFile}
       />
 
