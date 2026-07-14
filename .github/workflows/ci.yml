@@ -6,14 +6,24 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  validate:
-    name: Validar
+  qualidade:
+    name: Qualidade e pacote
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Baixar codigo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Configurar pnpm
         uses: pnpm/action-setup@v4
@@ -21,19 +31,34 @@ jobs:
           version: 10
 
       - name: Configurar Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            playground/pnpm-lock.yaml
 
-      - name: Instalar dependencias
+      - name: Instalar dependencias do pacote
         run: pnpm install --frozen-lockfile
+
+      - name: Instalar dependencias do playground
+        run: pnpm --dir playground install --frozen-lockfile
 
       - name: Lint
         run: pnpm lint
 
       - name: Testes
         run: pnpm test:run
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build do pacote
+        run: pnpm build
+
+      - name: Build do playground consumidor
+        run: pnpm --dir playground build
 
       - name: Configurar ffmpeg para validar a demo
         shell: bash
@@ -42,11 +67,41 @@ jobs:
       - name: Validar artefatos da demo
         run: pnpm demo:check
 
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Build
-        run: pnpm build
-
       - name: Conferir conteudo do pacote npm
         run: npm pack --dry-run
+
+  compatibilidade-node:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        node:
+          - 22
+          - 24
+
+    steps:
+      - name: Baixar codigo
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Configurar Node ${{ matrix.node }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Testar runtime e build
+        run: |
+          pnpm test:run
+          pnpm build
