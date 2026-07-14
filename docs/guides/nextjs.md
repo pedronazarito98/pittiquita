@@ -69,7 +69,7 @@ Move the actual integration to `PittiquitaNextPanel` in the App Router layout, t
 
 ## App Router considerations
 
-- The official wrapper is a Client Component and imports `next/navigation`; `next` is an optional peer dependency used only by the `pittiquita/next` entry point.
+- The official wrapper is a Client Component and imports `next/navigation`; use this entry point only inside an application that already has Next.js installed.
 - `searchKey` can trigger region refreshes when query-driven UI state changes without a pathname change.
 - The first activation replaces an unrelated URL hash, so test applications that own hash navigation.
 - Only `localhost` and `127.0.0.1` are accepted, regardless of the Next.js dev-server bind address.
