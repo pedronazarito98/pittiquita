@@ -5,7 +5,7 @@
     <strong>Capture live React UI states running on localhost and bring them into Figma through HTML to Design.</strong>
   </p>
   <p>
-    A small developer tool with SSR-aware browser guards for engineers and designers who need the rendered product—not a screenshot—to continue the design loop.
+    A focused development tool for engineers and designers who need the rendered product—not a screenshot—to continue the design loop.
   </p>
   <p>
     <a href="https://www.npmjs.com/package/pittiquita"><img alt="npm version" src="https://img.shields.io/npm/v/pittiquita?color=6366f1&style=flat-square" /></a>
@@ -15,19 +15,13 @@
     <a href="https://github.com/pedronazarito98/pittiquita/blob/main/LICENSE"><img alt="MIT license" src="https://img.shields.io/npm/l/pittiquita?color=111827&style=flat-square" /></a>
   </p>
   <p>
-    English
-    ·
-    <a href="https://github.com/pedronazarito98/pittiquita/blob/main/docs/README.pt-BR.md">Português</a>
+    English · <a href="https://github.com/pedronazarito98/pittiquita/blob/main/docs/README.pt-BR.md">Português</a>
   </p>
   <p>
-    <a href="#demo">Demo</a>
-    ·
-    <a href="#installation">Install</a>
-    ·
-    <a href="https://github.com/pedronazarito98/pittiquita/tree/main/docs/guides">Guides</a>
-    ·
-    <a href="https://github.com/pedronazarito98/pittiquita/blob/main/docs/architecture/overview.md">Architecture</a>
-    ·
+    <a href="#demo">Demo</a> ·
+    <a href="#installation">Install</a> ·
+    <a href="https://github.com/pedronazarito98/pittiquita/tree/main/docs/guides">Guides</a> ·
+    <a href="https://github.com/pedronazarito98/pittiquita/blob/main/docs/architecture/overview.md">Architecture</a> ·
     <a href="https://github.com/pedronazarito98/pittiquita/blob/main/SECURITY.md">Security</a>
   </p>
 </div>
@@ -36,11 +30,11 @@
 
 ## At a glance
 
-`pittiquita` adds a capture panel to a local React application. It can discover named regions, enable the capture hash, and load the external HTML to Design capture script. You then copy the browser URL and paste it into the independent [HTML to Design](https://www.figma.com/community/plugin/1159123024924461424/html-to-design) Figma plugin.
+`pittiquita` adds a capture panel to a local React application. It discovers named regions, enables the capture hash, loads the external HTML to Design capture script, and prepares the browser URL for the independent HTML to Design Figma plugin.
 
 ```text
 React app on localhost
-  → pittiquita panel or headless hooks
+  → pittiquita panel, framework adapter, or headless hooks
   → #figmacapture=manual + capture script
   → copy the browser URL
   → HTML to Design
@@ -49,10 +43,10 @@ React app on localhost
 
 | Built for | What it contributes |
 | --- | --- |
-| UI implementation reviews | Uses the state actually rendered by the browser: props, CSS, data, layout, and the visible interaction state at that moment. |
+| UI implementation reviews | Uses the state actually rendered by the browser: props, CSS, data, layout, and visible interaction state. |
 | Design-to-code-to-design loops | Makes the return path from a working React screen to Figma explicit and repeatable. |
 | Dense pages | Lets teams name useful regions and navigate to them from the panel. |
-| Development environments | Shows no capture UI outside `localhost` and `127.0.0.1`; the Vite integration is serve-only. |
+| Local development | Hides the capture UI outside `localhost` and `127.0.0.1`; the Vite adapter is serve-only. |
 
 > [!IMPORTANT]
 > `pittiquita` is an independent developer tool. It is not affiliated with, endorsed by, or an official product of Figma. The final import is performed by the separate HTML to Design plugin.
@@ -73,55 +67,34 @@ The checked-in walkthrough shows the real local panel and an explicitly illustra
 | --- | --- |
 | ![browser URL with the pittiquita capture hash](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/03-copy-url.png) | ![local mock that illustrates where to paste the URL in HTML to Design](https://raw.githubusercontent.com/pedronazarito98/pittiquita/main/docs/demo/04-figma-import-step.png) |
 
-The fourth image is a local mock, not evidence of a real Figma import. It keeps the demo reproducible without a Figma login. See the [demo notes](https://github.com/pedronazarito98/pittiquita/tree/main/docs/demo) for the generation command and that boundary.
+See the [demo notes](https://github.com/pedronazarito98/pittiquita/tree/main/docs/demo) for generation, validation, media budgets, and the mock boundary.
 
-## The problem
+## Why it exists
 
-The UI in a design file and the UI running in a product naturally drift apart. Once implementation starts, the browser becomes the only place where component props, real CSS, current data, layout constraints, and transient states exist together.
+Once implementation starts, the browser becomes the only place where component props, real CSS, realistic data, responsive constraints, loading states, error states, and interaction state coexist.
 
 Common workarounds lose useful information:
 
 | Workaround | Limitation |
 | --- | --- |
 | Screenshot | Preserves pixels, but not editable structure. |
-| Copy HTML manually | Requires DOM inspection and is easy to repeat incorrectly. |
-| Rebuild the state in Figma | Duplicates work and may miss implementation details. |
-| Share source code only | Does not communicate the exact state rendered in the browser. |
+| Copy HTML manually | Requires DOM inspection and is easy to repeat inconsistently. |
+| Rebuild the state in Figma | Duplicates work and can miss implementation decisions. |
+| Share source code only | Does not communicate the exact rendered state. |
 
-## What pittiquita does
+`pittiquita` keeps the scope deliberately narrow: prepare a live local React state for an editable design handoff without operating a backend, proxy, account system, or Figma API integration.
 
-- Renders a compact capture panel in a local React tree.
-- Enables `#figmacapture=manual` without replacing an existing capture hash.
+## What it does
+
+- Renders an accessible capture panel in a local React tree.
+- Enables `#figmacapture=manual` without duplicating an existing capture token.
 - Loads the HTML to Design capture script only when capture mode is active on an accepted local hostname.
-- Discovers visible elements marked with `data-figma-target` or the legacy-compatible `data-debug-layer` attribute.
-- Lets the user scroll to a named region and marks it with `data-figma-selected` so the host app can style the selected state if desired.
-- Exposes headless hooks for teams that need their own UI.
-- Provides a serve-only Vite plugin that mounts the panel automatically.
+- Discovers visible elements marked with `data-figma-target` or legacy-compatible `data-debug-layer`.
+- Scrolls to named regions and exposes the selected state through `data-figma-selected`.
+- Exposes headless hooks for custom interfaces.
+- Provides a serve-only Vite plugin with automatic, HMR-safe mounting.
+- Provides a route-aware Client Component for Next.js App Router.
 - Publishes ESM, CommonJS, and TypeScript declarations through four public entry points.
-
-## Who it is for
-
-- Frontend engineers reviewing implemented UI with product designers.
-- Design-system teams comparing real component states with their source designs.
-- Product engineers who need to bring a local dashboard, form, or flow back into Figma for iteration.
-- Small teams that want this handoff without operating another backend or account system.
-
-## Why I built this
-
-I built `pittiquita` for the moment when “the design” is no longer only in Figma. The implemented screen now contains decisions encoded in props, responsive CSS, realistic data, loading and error states, and browser layout. Screenshots flatten those decisions, while copying HTML by hand turns each iteration into a fragile DevTools task.
-
-The goal is deliberately narrow: give designers and engineers a short path from a live local React state back to an editable design workflow, while keeping the helper visible, inspectable, and limited to development hosts.
-
-## How it works
-
-1. Run the React application on `localhost` or `127.0.0.1`.
-2. Mount `FigmaCapturePanel`, or use the Vite plugin/headless hooks.
-3. Optionally mark useful regions with `FigmaTarget` or `figmaTarget()`.
-4. Choose **Activate capture**. `pittiquita` adds `#figmacapture=manual` and appends the default external capture script to the page.
-5. Copy the complete URL from the browser.
-6. Open HTML to Design in Figma and use its URL import flow.
-
-The browser page remains the source of the captured state. `pittiquita` does not run a proxy, upload service, or Figma API backend.
 
 ## Installation
 
@@ -138,11 +111,9 @@ npm install --save-dev pittiquita
 yarn add --dev pittiquita
 ```
 
-Installing it as a development dependency communicates the intended usage. If your production build still resolves code that imports the package, bundle exclusion depends on your integration and bundler.
+Installing it as a development dependency communicates the intended usage. Runtime guards do not universally guarantee bundle-byte removal, so use the environment boundary provided by your application or framework.
 
-## Quick start
-
-Render the panel inside a client-side React tree:
+## React quick start
 
 ```tsx
 import { FigmaCapturePanel } from 'pittiquita'
@@ -157,13 +128,9 @@ export function App() {
 }
 ```
 
-Open the app on `localhost` or `127.0.0.1`. On other hostnames, the component returns `null` after the client-side origin check.
+Open the app on `localhost` or `127.0.0.1`. On other hostnames, the panel returns `null` after the client-side origin check.
 
-For a production-conscious setup, also use the environment guard supported by your framework so the panel is not mounted in production. The localhost check prevents the capture UI from rendering; it is not by itself a guarantee that every bundler removes the package bytes.
-
-## React configuration
-
-The prebuilt panel supports positioning, partial theme/label overrides, callback hooks, and capture-script security attributes:
+The panel supports positioning, theme and label overrides, CSP/SRI attributes, callbacks, keyboard interaction, semantic status announcements, and slot class names:
 
 ```tsx
 import { FigmaCapturePanel } from 'pittiquita'
@@ -172,18 +139,21 @@ export function DevelopmentTools() {
   return (
     <FigmaCapturePanel
       position="bottom-left"
-      labels={{ panelTitle: 'Design handoff' }}
+      labels={{
+        panelTitle: 'Design handoff',
+        activateCapture: 'Prepare URL',
+      }}
       onRegionSelect={(region) => console.info(region.id)}
     />
   )
 }
 ```
 
-See the [React guide](https://github.com/pedronazarito98/pittiquita/blob/main/docs/guides/react.md) for theming, labels, callbacks, and development gating.
+See the [React guide](https://github.com/pedronazarito98/pittiquita/blob/main/docs/guides/react.md).
 
 ## Vite
 
-The dedicated Vite plugin mounts the panel during `vite dev`:
+The dedicated Vite plugin mounts the panel only during `vite dev`:
 
 ```ts
 // vite.config.ts
@@ -196,44 +166,34 @@ export default defineConfig({
 })
 ```
 
-The plugin declares `apply: 'serve'`, so it does not inject its virtual module during `vite build`. Plugin options must be serializable; render `FigmaCapturePanel` manually when you need function props such as callbacks.
+The plugin declares `apply: 'serve'`, reuses its mount during development, and cleans it up during hot-module replacement. Plugin options must be serializable; render `FigmaCapturePanel` manually when you need function props such as callbacks.
 
 See the [Vite guide](https://github.com/pedronazarito98/pittiquita/blob/main/docs/guides/vite.md).
 
 ## Next.js App Router
 
-Use a Client Component. This is the recommended and explicit integration:
-
-```tsx
-// app/pittiquita-panel.tsx
-'use client'
-
-import { usePathname } from 'next/navigation'
-import { FigmaCapturePanel } from 'pittiquita'
-
-export function PittiquitaPanel() {
-  return <FigmaCapturePanel pathname={usePathname()} />
-}
-```
+Use the route-aware Client Component exported by `pittiquita/next`:
 
 ```tsx
 // app/layout.tsx
 import type { ReactNode } from 'react'
-import { PittiquitaPanel } from './pittiquita-panel'
+import { PittiquitaNextPanel } from 'pittiquita/next'
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
         {children}
-        {process.env.NODE_ENV === 'development' ? <PittiquitaPanel /> : null}
+        <PittiquitaNextPanel />
       </body>
     </html>
   )
 }
 ```
 
-The current `pittiquita/next` entry point exports `withPittiquita`, but that configuration helper does **not** mount the React panel. Do not rely on it for automatic UI injection. The Client Component above is the recommended documented path, and a dedicated Next.js integration test is not yet present.
+`PittiquitaNextPanel` already contains the client boundary, reads `usePathname()`, refreshes regions after App Router navigation, and returns `null` outside development by default.
+
+`withPittiquita()` remains available only as a deprecated identity wrapper for migration. It never mounted the UI. Move existing integrations to `PittiquitaNextPanel` and remove the legacy wrapper from `next.config`.
 
 See the [Next.js guide](https://github.com/pedronazarito98/pittiquita/blob/main/docs/guides/nextjs.md).
 
@@ -253,7 +213,7 @@ export function Hero() {
 }
 ```
 
-Use `figmaTarget()` to add the attributes to an existing element:
+Use `figmaTarget()` to add attributes to an existing element:
 
 ```tsx
 import { figmaTarget } from 'pittiquita'
@@ -267,7 +227,7 @@ Both APIs emit `data-figma-target` and `data-figma-label`. Region discovery obse
 
 ## Headless hooks
 
-Build a custom toolbar through `pittiquita/hooks`:
+Build a custom interface through `pittiquita/hooks`:
 
 ```tsx
 import {
@@ -291,129 +251,97 @@ export function CaptureToolbar() {
 }
 ```
 
-The hooks entry point also exports file-reference helpers, labels, capture utilities, and public hook types. See [Targets and headless hooks](https://github.com/pedronazarito98/pittiquita/blob/main/docs/guides/targets-and-hooks.md).
+See [Targets and headless hooks](https://github.com/pedronazarito98/pittiquita/blob/main/docs/guides/targets-and-hooks.md).
 
 ## Public entry points
-
-The package manifest exposes exactly four entry points, each built as ESM and CommonJS with declarations:
 
 | Import | Purpose |
 | --- | --- |
 | `pittiquita` | React components, hooks, utilities, and public types. |
 | `pittiquita/hooks` | Headless hooks, supporting utilities, and hook types. |
-| `pittiquita/vite` | Serve-only Vite plugin with automatic panel mounting. |
-| `pittiquita/next` | Development-time Next config wrapper; it does not mount UI. |
+| `pittiquita/vite` | Serve-only Vite adapter with automatic HMR-safe mounting. |
+| `pittiquita/next` | Route-aware App Router component and deprecated migration wrapper. |
+
+All four entry points are built as ESM and CommonJS with TypeScript declarations.
 
 ## Architecture
-
-The code is intentionally split by responsibility:
 
 | Area | Responsibility |
 | --- | --- |
 | `src/core/` | Browser guards, capture state, region discovery, file-reference utilities, and shared types. |
-| `src/react/` | `FigmaCapturePanel`, `FigmaTarget`, small UI components, and inline styles. |
-| `src/vite/` | Vite virtual module and serve-only injection. |
-| `src/next/` | Next.js config wrapper; no component injection. |
-| `playground/` | Vite app linked to the parent package for manual/demo validation. |
-| `tests/` | Vitest/jsdom tests mirroring core and React behavior. |
+| `src/react/` | Accessible panel, target APIs, UI slots, and inline styles. |
+| `src/vite/` | Serve-only virtual module and automatic mount lifecycle. |
+| `src/next/` | Route-aware App Router client adapter and legacy compatibility export. |
+| `playground/` | Linked Vite consumer used for browser and demo validation. |
+| `tests/` | Unit and integration-oriented Vitest/jsdom coverage. |
 | `scripts/` | Reproducible visual-demo automation. |
-| `docs/demo/` | Versioned PNG, GIF, and WebM evidence with honest handoff documentation. |
 
 Read the [architecture and trust-boundary overview](https://github.com/pedronazarito98/pittiquita/blob/main/docs/architecture/overview.md).
 
 ## Security and privacy
 
-- `pittiquita` has no backend, account, analytics, or telemetry service.
+- No backend, account, analytics, or telemetry service is included.
 - Importing the package has no intentional network side effect.
 - The capture script is appended only after capture mode is active and the hostname is exactly `localhost` or `127.0.0.1`.
-- By default, that script comes from `https://mcp.figma.com/mcp/html-to-design/capture.js` and executes in the page. Treat this as a third-party trust boundary: it can inspect the rendered DOM.
-- `scriptSrc`, `nonce`, `integrity`, and `crossOrigin` are available for teams with a controlled mirror or strict Content Security Policy.
-- The optional Figma file reference is stored in browser `localStorage`; pittiquita does not upload it, and the panel's reset action does not remove the stored value.
+- The default script comes from `https://mcp.figma.com/mcp/html-to-design/capture.js` and executes in the host page. Treat it as a third-party trust boundary that can inspect the rendered DOM.
+- `scriptSrc`, `nonce`, `integrity`, and `crossOrigin` support controlled mirrors and stricter Content Security Policy setups.
+- The optional Figma file reference is stored only in browser `localStorage`.
 - The local-host check is a product guard, not authentication or a security sandbox.
 
-Use synthetic or sanitized development data. Do not capture production secrets, personal data, access tokens, or confidential customer content. Read [SECURITY.md](https://github.com/pedronazarito98/pittiquita/blob/main/SECURITY.md) before enabling the external script in a sensitive application.
-
-## What pittiquita is not
-
-`pittiquita`:
-
-- does not replace Storybook, design tokens, a component library, or a design system;
-- does not replace native Figma components or variants;
-- is not a Figma plugin and is not an official Figma integration;
-- does not authenticate with Figma or manage Figma files;
-- does not recreate React source code, state logic, event handlers, or application behavior inside Figma;
-- does not guarantee pixel-perfect conversion—the independent HTML to Design importer owns that result;
-- should not be used to expose sensitive production states.
+Use synthetic or sanitized development data. Do not capture production secrets, personal data, access tokens, or confidential customer content. Read [SECURITY.md](https://github.com/pedronazarito98/pittiquita/blob/main/SECURITY.md).
 
 ## Compatibility and evidence
 
-The labels below distinguish tested behavior from declared or documented behavior:
-
-- **Tested baseline**: exercised by this repository's automated suite or build.
-- **Implemented**: present in source/package configuration, without a dedicated integration matrix.
-- **Documented path**: expected usage based on the public API, not yet covered by an end-to-end framework test.
-
 | Environment | Evidence level | Current boundary |
 | --- | --- | --- |
-| React 18 | Declared support | `react` and `react-dom` peers are `>=18.0.0`; the current automated suite runs React 19, not a separate React 18 job. |
-| React 19 | Tested baseline | Development and tests use React `^19.2.5`. |
-| Vite | Implemented | Dedicated `pittiquita/vite` plugin configured in the playground; production injection is disabled with `apply: 'serve'`, but automatic mounting has no isolated integration test. |
-| Next.js App Router | Documented path | Mount a Client Component manually; no automated Next.js integration test exists. |
-| SSR | Implemented guards | Browser access is deferred/guarded, but there is no framework-level SSR matrix yet. |
+| React 18 | Declared support | Peer range is `>=18.0.0`; dedicated React 18 CI coverage is still future work. |
+| React 19 | Tested baseline | Repository development and automated tests use React 19. |
+| Vite | Unit-tested adapter | Serve-only behavior, serialization, idempotent mounting, and HMR cleanup are covered. |
+| Next.js App Router | Unit-tested adapter | The client wrapper and route-aware contract are covered; a full framework fixture is still future work. |
+| SSR | Implemented guards | Browser access is deferred or guarded; framework-level fixture coverage remains limited. |
 | Non-local origins | Tested runtime guard | The panel returns no UI. This does not prove bundle-byte removal. |
-| ESM and CommonJS | Tested build | `tsup` produces both formats and declaration files for all entry points. |
-| `localhost`, `127.0.0.1` | Tested baseline | These are the only accepted hostnames. IPv6 `::1` and custom local domains are not accepted. |
+| ESM and CommonJS | Build-verified | All public entry points produce both formats and declarations. |
+| `localhost`, `127.0.0.1` | Tested baseline | IPv6 loopback, LAN IPs, and custom local domains are not accepted. |
 
 ## Known limitations
 
-- URL capture depends on the external HTML to Design script and the separate Figma plugin.
-- The capture hash replaces a pre-existing non-capture hash when first activated.
-- Custom development hostnames, LAN IPs, HTTPS preview domains, and IPv6 loopback are outside the current local-origin allowlist.
-- Shadow DOM, cross-origin iframes, canvas-heavy content, video, complex animations, and browser-only assets may require manual verification after import.
-- Region discovery only lists visible matching elements in the main document.
-- `FigmaTarget` and `figmaTarget()` still emit their wrapper/attributes wherever the consumer renders them, including production.
-- The panel asks the user to copy the browser URL; it does not currently provide a copy-to-clipboard button.
-- Build-time removal for manual React/Next usage depends on the consumer's environment guard and bundler.
-- React 18 and Next.js do not yet have dedicated CI matrix jobs in this repository.
+- Capture depends on the external HTML to Design script and the separate Figma plugin.
+- The first activation replaces a pre-existing non-capture hash.
+- Region discovery covers visible matching elements in the main document, not Shadow DOM or cross-origin iframes.
+- Canvas-heavy content, video, complex animation, and browser-only assets can require manual verification after import.
+- `FigmaTarget` and `figmaTarget()` emit markup wherever the consumer renders them, including production.
+- The panel asks the user to copy the browser URL; it does not currently provide a clipboard action.
+- Build-time exclusion for manual React and Next.js usage depends on the consumer's environment guard and bundler.
 
 ## Project quality
 
-The current repository baseline is inspectable rather than aspirational:
-
-| Evidence | Current baseline | How to verify |
-| --- | --- | --- |
-| Package version | `0.1.7` | `package.json` or the dynamic npm badge. |
-| Public entry points | 4 | Inspect `package.json#exports` and `tsup.config.ts`. |
-| Automated tests | 82 tests across 11 files in the integrated reproducible-demo baseline | Run `pnpm test:run`. Before the demo tests were added, the verified baseline was 58 across 9 files. |
-| Type/build outputs | ESM, CommonJS, and declarations | Run `pnpm typecheck` and `pnpm build`. |
-| Package contents | Dry-run tarball inspection | Run `pnpm pack:check`; sizes are intentionally not hard-coded here. |
-| Continuous integration | lint, tests, demo artifact check, typecheck, build, pack dry-run | Inspect `.github/workflows/ci.yml` or the CI badge. |
-
-## Contributing
-
-Contributions are welcome when they preserve the development-only boundary and public API stability. Start with [CONTRIBUTING.md](https://github.com/pedronazarito98/pittiquita/blob/main/CONTRIBUTING.md), follow the [Code of Conduct](https://github.com/pedronazarito98/pittiquita/blob/main/CODE_OF_CONDUCT.md), and use the issue/PR templates.
+Run the same gates used by the repository:
 
 ```bash
 pnpm install --frozen-lockfile
 pnpm validate
 pnpm pack:check
+pnpm --dir playground install --frozen-lockfile
 pnpm --dir playground build
+pnpm demo:check
 ```
 
-Changes to demo automation or media also require `pnpm demo:check` and the workflow documented under `docs/demo/`.
+The repository includes automated tests, package dry-run inspection, a linked consumer playground, reproducible demo media, contribution and security policies, and bilingual product documentation. Counts are intentionally not hard-coded here; the CI result is the source of truth.
 
-Security findings should follow the private process in [SECURITY.md](https://github.com/pedronazarito98/pittiquita/blob/main/SECURITY.md), not a public issue.
+## Contributing
+
+Start with [CONTRIBUTING.md](https://github.com/pedronazarito98/pittiquita/blob/main/CONTRIBUTING.md), follow the [Code of Conduct](https://github.com/pedronazarito98/pittiquita/blob/main/CODE_OF_CONDUCT.md), and use the issue and pull request templates.
+
+Security findings must follow the private process in [SECURITY.md](https://github.com/pedronazarito98/pittiquita/blob/main/SECURITY.md), not a public issue.
 
 ## Roadmap direction
 
-These are directions, not committed release dates:
-
-- Add explicit automated matrices for React 18 and a Next.js App Router fixture.
+- Add full React 18 and Next.js App Router fixtures.
 - Improve region navigation for dense pages.
 - Make the capture-URL handoff more direct while keeping browser permissions explicit.
 - Expand examples for design-system and monorepo workflows.
 
-Track accepted work in [GitHub Issues](https://github.com/pedronazarito98/pittiquita/issues); do not treat this list as a compatibility promise.
+These are directions, not committed release dates. Track accepted work in [GitHub Issues](https://github.com/pedronazarito98/pittiquita/issues).
 
 ## License
 
