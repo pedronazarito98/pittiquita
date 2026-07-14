@@ -11,11 +11,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Open-source contribution, security, conduct, issue, and pull request guidance.
 - Architecture, React, Vite, Next.js, target, and headless-hook guides.
 - An evidence-labeled compatibility matrix and explicit product limitations.
+- `PittiquitaNextPanel`, a route-aware Client Component for Next.js App Router.
+- Dedicated unit coverage for the Next.js wrapper and Vite virtual module.
 
 ### Changed
 
 - Made English the canonical repository README and preserved a complete Portuguese version.
 - Reframed the first-visit documentation around the product problem, audience, workflow, trust boundary, and verifiable quality evidence.
+- Made the Vite automatic mount idempotent and cleaned it up during hot-module replacement.
+
+### Deprecated
+
+- `withPittiquita()` is now an explicit compatibility identity wrapper. Use `PittiquitaNextPanel` instead; the previous helper never mounted the panel.
 
 ## Historical releases
 

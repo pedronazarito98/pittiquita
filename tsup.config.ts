@@ -12,5 +12,5 @@ export default defineConfig({
   splitting: true,
   clean: true,
   treeshake: true,
-  external: ['react', 'react-dom', 'next', 'vite'],
+  external: ['react', 'react-dom', 'next', 'next/navigation', 'vite'],
 })

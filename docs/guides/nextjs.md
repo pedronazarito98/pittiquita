@@ -1,72 +1,87 @@
 # Next.js App Router guide
 
-Next.js integration currently uses an explicit Client Component. This is a documented path, not an automated framework integration test.
+`pittiquita/next` provides a Client Component that reads the current App Router pathname and mounts the capture panel only in development by default.
 
-## 1. Create the client boundary
-
-```tsx
-// app/pittiquita-panel.tsx
-'use client'
-
-import { usePathname } from 'next/navigation'
-import { FigmaCapturePanel } from 'pittiquita'
-
-export function PittiquitaPanel() {
-  const pathname = usePathname()
-
-  return <FigmaCapturePanel pathname={pathname} />
-}
-```
-
-Passing `pathname` prompts region discovery to refresh after an App Router navigation.
-
-## 2. Mount only in development
+## 1. Mount the official integration
 
 ```tsx
 // app/layout.tsx
 import type { ReactNode } from 'react'
-import { PittiquitaPanel } from './pittiquita-panel'
+import { PittiquitaNextPanel } from 'pittiquita/next'
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
         {children}
-        {process.env.NODE_ENV === 'development' ? <PittiquitaPanel /> : null}
+        <PittiquitaNextPanel />
       </body>
     </html>
   )
 }
 ```
 
-The environment condition expresses the intended build boundary. Confirm its effect against your Next.js version and output mode; the panel's own localhost check is a runtime UI guard, not a universal bundle-size guarantee.
+`PittiquitaNextPanel` already contains the `'use client'` boundary, reads `usePathname()`, and forwards the route to `FigmaCapturePanel`. Region discovery therefore refreshes after App Router navigation.
 
-## What `pittiquita/next` does today
+The component returns `null` outside `development` by default. The panel also keeps its localhost runtime guard, so both conditions must pass before UI or the external capture script can appear.
 
-The package exports `withPittiquita()` from `pittiquita/next`, preserving the four-entry-point package contract. In the current implementation:
+## 2. Apply panel options
 
-- production returns the supplied config unchanged;
-- development wraps the existing webpack callback/entry flow;
-- supplied pittiquita options are not mounted or applied to UI;
-- no bootstrap component is injected.
+The wrapper accepts the same props as `FigmaCapturePanel`, except `pathname`, plus an `enabled` switch:
 
-Therefore this guide does not use `withPittiquita()`. Do not describe it as automatic panel injection.
+```tsx
+import { PittiquitaNextPanel } from 'pittiquita/next'
+
+export function DevelopmentTools() {
+  return (
+    <PittiquitaNextPanel
+      position="bottom-left"
+      labels={{ panelTitle: 'Design handoff' }}
+      searchKey="filters-v2"
+      onRegionSelect={(region) => console.info(region.id)}
+    />
+  )
+}
+```
+
+Use `enabled` when the application has its own environment or feature-flag rule:
+
+```tsx
+<PittiquitaNextPanel enabled={process.env.NEXT_PUBLIC_ENABLE_PITTIQUITA === 'true'} />
+```
+
+Only expose such a flag in trusted development environments. Localhost is an operational guard, not authentication.
+
+## Migrating from `withPittiquita`
+
+Older versions exported `withPittiquita()` as though it injected the panel through `next.config`. It never mounted UI or applied the supplied options.
+
+The function remains temporarily available as a deprecated identity wrapper so existing configuration files do not break immediately:
+
+```ts
+// Legacy compatibility only. Remove this wrapper during migration.
+import { withPittiquita } from 'pittiquita/next'
+
+export default withPittiquita({ reactStrictMode: true })
+```
+
+Move the actual integration to `PittiquitaNextPanel` in the App Router layout, then remove `withPittiquita` from `next.config`.
 
 ## App Router considerations
 
-- `FigmaCapturePanel` must be rendered below a `'use client'` boundary because it uses hooks and browser state.
-- Pass `pathname` when client-side route changes should refresh regions.
-- You can also pass a stable `searchKey` string when query-state changes matter.
-- The first activation replaces an unrelated URL hash, so test hash-based application behavior.
+- The official wrapper is a Client Component and imports `next/navigation`; use this entry point only inside an application that already has Next.js installed.
+- `searchKey` can trigger region refreshes when query-driven UI state changes without a pathname change.
+- The first activation replaces an unrelated URL hash, so test applications that own hash navigation.
 - Only `localhost` and `127.0.0.1` are accepted, regardless of the Next.js dev-server bind address.
+- The environment check prevents rendering by default in production, but consumers should still inspect their own build output when bundle exclusion is a requirement.
 
 ## Verification checklist
 
 - A development render on `localhost` shows one panel.
 - Navigating between App Router routes refreshes marked regions.
 - A non-local hostname produces no panel UI.
-- The production output follows your intended environment/bundle boundary.
+- Production renders no panel unless `enabled` is explicitly overridden.
 - Server rendering produces no browser-global exception from the mounted path.
-- Capture activation works with your Content Security Policy.
+- Capture activation works with the application's Content Security Policy.
 
-The repository does not currently include Next.js as a development dependency or run this checklist in CI. Contributions that add a focused fixture are welcome; see [CONTRIBUTING.md](../../CONTRIBUTING.md).
+The repository unit-tests the wrapper contract and route-aware mount path. A full Next.js fixture remains useful future coverage for framework-version compatibility.
