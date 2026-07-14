@@ -43,6 +43,19 @@ describe('useFigmaFileRef', () => {
     expect(result.current.status).toBe('')
   })
 
+  it('uses custom validation message', () => {
+    const { result } = renderHook(() =>
+      useFigmaFileRef({
+        initialValue: '!!invalid!!',
+        invalidMessage: 'Referencia invalida.',
+      })
+    )
+
+    act(() => result.current.openExistingFile())
+
+    expect(result.current.error).toBe('Referencia invalida.')
+  })
+
   it('openExistingFile opens window for valid key', () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
     const { result } = renderHook(() =>
@@ -56,6 +69,21 @@ describe('useFigmaFileRef', () => {
     )
     expect(result.current.status).not.toBe('')
     expect(result.current.error).toBe('')
+    openSpy.mockRestore()
+  })
+
+  it('uses custom success message', () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+    const { result } = renderHook(() =>
+      useFigmaFileRef({
+        initialValue: 'ABC123',
+        openedMessage: 'Arquivo aberto.',
+      })
+    )
+
+    act(() => result.current.openExistingFile())
+
+    expect(result.current.status).toBe('Arquivo aberto.')
     openSpy.mockRestore()
   })
 
