@@ -15,9 +15,6 @@ updates:
         update-types:
           - minor
           - patch
-    labels:
-      - dependencies
-      - javascript
     commit-message:
       prefix: chore(deps)
 
@@ -34,9 +31,6 @@ updates:
         update-types:
           - minor
           - patch
-    labels:
-      - dependencies
-      - playground
     commit-message:
       prefix: chore(playground)
 
@@ -53,8 +47,5 @@ updates:
         update-types:
           - minor
           - patch
-    labels:
-      - dependencies
-      - github-actions
     commit-message:
       prefix: ci(deps)
