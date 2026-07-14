@@ -7,6 +7,8 @@ import { defaultLabels } from '../utils/labels'
 export type UseFigmaFileRefOptions = {
   storageKey?: string
   initialValue?: string
+  invalidMessage?: string
+  openedMessage?: string
 }
 
 export type UseFigmaFileRefResult = {
@@ -27,6 +29,8 @@ export const useFigmaFileRef = (
   options?: UseFigmaFileRefOptions
 ): UseFigmaFileRefResult => {
   const storageKey = options?.storageKey ?? STORAGE_FILE_REF_KEY
+  const invalidMessage = options?.invalidMessage ?? defaultLabels.fileRefInvalid
+  const openedMessage = options?.openedMessage ?? defaultLabels.fileOpened
 
   const [value, setValueState] = useState(options?.initialValue ?? '')
   const [error, setError] = useState('')
@@ -53,7 +57,7 @@ export const useFigmaFileRef = (
     const fileKey = normalizeFileKey(value)
 
     if (!fileKey) {
-      setError(defaultLabels.fileRefInvalid)
+      setError(invalidMessage)
       setStatus('')
       return
     }
@@ -65,8 +69,8 @@ export const useFigmaFileRef = (
       window.open(buildFigmaFileUrl(fileKey), '_blank', 'noopener,noreferrer')
     }
 
-    setStatus(defaultLabels.fileOpened)
-  }, [value, storageKey])
+    setStatus(openedMessage)
+  }, [invalidMessage, openedMessage, storageKey, value])
 
   const reset = useCallback(() => {
     setError('')
