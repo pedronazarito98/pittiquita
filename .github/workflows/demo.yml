@@ -71,7 +71,7 @@ jobs:
         run: pnpm demo:check
 
       - name: Enviar midias para inspecao
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pittiquita-demo-${{ github.run_id }}
           path: |
