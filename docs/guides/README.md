@@ -10,6 +10,8 @@ These guides expand the canonical [product README](../../README.md) without chan
 | [React](./react.md) | You want manual mounting, labels, theme tokens, callbacks, or capture-script options. |
 | [Vite](./vite.md) | You want serve-only automatic panel mounting. |
 | [Next.js App Router](./nextjs.md) | You want the explicit Client Component integration and its current limitations. |
+| [Storybook React](./storybook.md) | You want to capture a story's rendered props and state from its local preview. |
+| [Agents](./agent-setup.md) | You want reusable instructions for configuring Pittiquita and marking components in consumer projects. |
 | [Targets and headless hooks](./targets-and-hooks.md) | You want named regions or a custom capture UI. |
 
 ## Before using capture
@@ -22,4 +24,4 @@ Read [SECURITY.md](../../SECURITY.md). Enabling capture loads a third-party scri
 - **Implemented** means the behavior exists in source but lacks a dedicated framework integration test.
 - **Documented path** means the public API supports the example, but the framework flow does not yet have end-to-end coverage here.
 
-The compatibility matrix in the [main README](../../README.md#compatibility-and-evidence) is the source of truth.
+The compatibility matrix in the [detailed product overview](../README.pt-BR.md#compatibilidade-e-evidências) is the source of truth.

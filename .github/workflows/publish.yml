@@ -69,6 +69,14 @@ jobs:
           pnpm build
           pnpm --dir playground build
 
+      - name: Validar Storybook consumidor
+        run: |
+          pnpm --dir playground typecheck:storybook
+          pnpm --dir playground build-storybook
+
+      - name: Conferir executavel de orientacoes para agentes
+        run: node dist/cli.js --help
+
       - name: Configurar ffmpeg para validar a demo
         shell: bash
         run: command -v ffmpeg >/dev/null || (sudo apt-get update && sudo apt-get install -y ffmpeg)

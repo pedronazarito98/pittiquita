@@ -1,5 +1,6 @@
 node_modules/
 dist/
+storybook-static/
 *.tsbuildinfo
 .DS_Store
 
@@ -47,3 +48,9 @@ npm-debug.log*
 pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Skill distribuida com o pacote (as demais pastas de agentes continuam locais)
+!/skills/
+/skills/*
+!/skills/pittiquita/
+!/skills/pittiquita/**

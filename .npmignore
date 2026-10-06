@@ -54,3 +54,9 @@ yarn-error.log*
 .DS_Store
 .idea/
 .vscode/
+
+# Skill publica distribuida junto da biblioteca
+!/skills/
+/skills/*
+!/skills/pittiquita/
+!/skills/pittiquita/**

@@ -1,6 +1,6 @@
 {
   "name": "pittiquita",
-  "version": "0.1.7",
+  "version": "0.2.0",
   "description": "React toolkit for capturing localhost components and sending them to Figma via HTML to Design",
   "type": "module",
   "author": {
@@ -24,6 +24,9 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "pittiquita": "./dist/cli.js"
+  },
   "exports": {
     ".": {
       "import": {
@@ -55,6 +58,16 @@
         "default": "./dist/next.cjs"
       }
     },
+    "./storybook": {
+      "import": {
+        "types": "./dist/storybook.d.ts",
+        "default": "./dist/storybook.js"
+      },
+      "require": {
+        "types": "./dist/storybook.d.cts",
+        "default": "./dist/storybook.cjs"
+      }
+    },
     "./vite": {
       "import": {
         "types": "./dist/vite.d.ts",
@@ -68,6 +81,7 @@
   },
   "files": [
     "dist",
+    "skills/pittiquita",
     "README.md",
     "LICENSE"
   ],

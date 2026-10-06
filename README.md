@@ -29,6 +29,7 @@ React no localhost
 - ativa o modo de captura sem duplicar o hash;
 - oferece `FigmaTarget`, `figmaTarget()` e hooks headless;
 - integra com Vite durante `serve` e com Next.js App Router;
+- integra com o Canvas do Storybook React por um decorator de preview;
 - publica ESM, CommonJS e declarações TypeScript.
 
 ## Instalação
@@ -54,6 +55,47 @@ export function App() {
 
 O painel aparece em `localhost` ou `127.0.0.1` e retorna `null` fora dessas origens.
 
+## Storybook React
+
+A partir da versão `0.2.0`, a integração está disponível em `pittiquita/storybook`:
+
+```ts
+// .storybook/preview.ts
+import type { Preview } from '@storybook/react-vite'
+import { withPittiquita } from 'pittiquita/storybook'
+
+const preview = {
+  decorators: process.env.NODE_ENV === 'development' ? [withPittiquita()] : [],
+} satisfies Preview
+
+export default preview
+```
+
+Use o tipo `Preview` do seu framework React. O decorator identifica a story atual, marca o canvas como região e monta o painel no iframe de preview, sem adicionar wrappers ao componente. Ele fica desativado em Docs e em produção por padrão; `parameters.pittiquita: false` desliga uma story específica.
+
+Para copiar a URL de captura, abra a story em uma nova aba pelo botão do Storybook e ative a captura nessa aba. A URL do manager não é a URL do iframe. Não combine esse decorator com a montagem automática de `pittiquita/vite` no mesmo preview.
+
+```bash
+pnpm build
+pnpm --dir playground install
+pnpm --dir playground storybook
+```
+
+Veja configuração, Controls, limites e exemplos no [guia de Storybook](./docs/guides/storybook.md).
+
+## Configurar com agentes
+
+O pacote `0.2.0` inclui uma skill para agentes configurarem React, Vite, Next.js e Storybook, reutilizarem o painel existente e marcarem os componentes solicitados. Com o pacote instalado, execute na pasta do projeto consumidor:
+
+```bash
+pnpm exec pittiquita agents init --dry-run
+pnpm exec pittiquita agents init
+```
+
+O comando instala `.agents/skills/pittiquita/` e acrescenta uma referência às instruções do projeto, preservando o conteúdo existente. Depois, no Codex, peça por exemplo: `$pittiquita adicione captura ao card de resumo`.
+
+Versões anteriores a `0.2.0` não incluem esse comando. Veja instalação, uso a partir do checkout e comportamento em outros agentes no [guia para agentes](./docs/guides/agent-setup.md).
+
 ## Playground local
 
 ```bash
@@ -73,6 +115,9 @@ O playground demonstra `FigmaTarget`, `figmaTarget()`, regiões aninhadas, seç�
 | `src/react/` | painel, componentes de alvo, acessibilidade e estilos |
 | `src/vite/` | adaptador de desenvolvimento com montagem segura durante HMR |
 | `src/next/` | integração com o App Router |
+| `src/storybook/` | decorator React e painel no documento de preview |
+| `src/cli/` | instalação explícita das orientações no projeto consumidor |
+| `skills/pittiquita/` | instruções reutilizáveis e referências por integração |
 | `playground/` | aplicação local usada para validar o pacote no navegador |
 | `tests/` | testes focados do core e das integrações |
 

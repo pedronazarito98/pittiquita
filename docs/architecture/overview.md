@@ -1,6 +1,6 @@
 # Architecture and trust boundaries
 
-This document describes the implementation shipped by the repository baseline at package version `0.1.7`. It separates source-backed behavior from framework integrations that are only documented today.
+This document describes package version `0.2.0`. It separates source-backed behavior from framework flows that still require runtime validation.
 
 ## System flow
 
@@ -39,7 +39,10 @@ https://mcp.figma.com/mcp/html-to-design/capture.js
 | `src/core/utils/` | Capture constants/script injection, target discovery, labels, and file-key parsing. | Automatic server guards for every direct utility call. |
 | `src/react/` | Panel, target wrapper/helper, small UI slots, and inline theme variables. | HTML-to-Figma conversion or production build exclusion. |
 | `src/vite/` | A virtual module that mounts the panel while Vite is serving. | Production injection; the plugin uses `apply: 'serve'`. |
-| `src/next/` | A development-time config wrapper exported as `withPittiquita`. | Mounting the React panel. The current options are not applied to UI. |
+| `src/next/` | A route-aware panel adapter for App Router and a deprecated identity config wrapper. | Automatic UI injection from `next.config` or the consumer's client boundary. |
+| `src/storybook/` | A React preview decorator, automatic canvas target, and portal outside the story layout. | Manager UI, Docs panels, non-React renderers, or serialization of transient story state. |
+| `src/cli/` | Explicit installation of a skill and a short project-instruction block. | Application configuration, dependency installation, network access, or agent runtime integration. |
+| `skills/pittiquita/` | Consumer integration guidance with task-specific references. | Automatic code changes or guaranteed discovery in every agent client. |
 | `playground/` | A local Vite consumer used for manual and demo checks. | A framework compatibility matrix. |
 | `tests/` | Vitest/jsdom coverage of core hooks, utilities, and React components. | Real Figma import, React 18 matrix, Next.js integration, real SSR, or isolated Vite runtime integration. |
 | `scripts/` | Playwright-driven demo capture. | Product runtime behavior. |
@@ -47,16 +50,19 @@ https://mcp.figma.com/mcp/html-to-design/capture.js
 
 ## Public package surfaces
 
-`package.json#exports` and `tsup.config.ts` define four public entry points:
+`package.json#exports` and `tsup.config.ts` define five public entry points:
 
 | Entry point | Source | Output contract |
 | --- | --- | --- |
 | `pittiquita` | `src/index.ts` | Components, hooks, utilities, and public types. |
 | `pittiquita/hooks` | `src/hooks.ts` | Headless hooks, utilities, labels, and hook types. |
 | `pittiquita/vite` | `src/vite/plugin.ts` | Vite plugin. |
-| `pittiquita/next` | `src/next/plugin.ts` | Next config wrapper; no panel mounting. |
+| `pittiquita/next` | `src/next/plugin.ts` | `PittiquitaNextPanel` for a consumer client boundary; deprecated identity config wrapper. |
+| `pittiquita/storybook` | `src/storybook/decorator.tsx` | React preview decorator, automatic canvas target, and portal-mounted panel. |
 
-`tsup` is configured to produce ESM, CommonJS, and declaration files for all four. React, React DOM, Next.js, and Vite are externalized from the build. Only React and React DOM are declared peer dependencies; Next.js and Vite are not declared peers in the current manifest.
+`tsup` is configured to produce ESM, CommonJS, and declaration files for all five. React, React DOM, Next.js, and Vite are externalized from the build. Only React and React DOM are declared peer dependencies; Next.js and Vite are not declared peers in the current manifest. The Storybook adapter uses a structural context type and adds no Storybook runtime dependency to the library. Storybook tooling lives only in the playground's development dependencies.
+
+The separate `pittiquita` executable is declared through `package.json#bin` and compiled from `src/cli/cli.ts`. It uses Node built-ins and copies the six bundled skill files from `skills/pittiquita/`. It is not imported by the browser entry points and adds no runtime dependency. See the [agent guide](../guides/agent-setup.md) for installation and conflict handling.
 
 ## Browser and SSR boundary
 
@@ -67,7 +73,7 @@ The package is SSR-aware, but not every exported function is meaningful on a ser
 - `FigmaCapturePanel` starts hidden and only renders after the local-origin effect succeeds.
 - `FigmaTarget` can render normal data attributes during SSR.
 - Direct DOM utilities such as `buildRegionEntries()` require a browser document and should not be called during server rendering.
-- The recommended Next.js App Router integration therefore mounts the panel from a Client Component.
+- The recommended Next.js App Router integration therefore mounts the panel from a consumer Client Component; the current package build does not preserve the source directive.
 
 There is no framework-level SSR integration test in the current suite. “SSR-aware” refers to the implemented guards, not a universal guarantee for arbitrary direct utility calls.
 
@@ -120,6 +126,6 @@ The external capture script executes in the application's page and may inspect r
 | Serve-only Vite plugin | `src/vite/plugin.ts`. |
 | Manual Next boundary | `src/next/plugin.ts`, [Next.js guide](../guides/nextjs.md). |
 | Formats and exports | `package.json`, `tsup.config.ts`, `pnpm build`, `pnpm pack:check`. |
-| Automated baseline | `pnpm test:run` (82 tests across 11 files after reproducible-demo integration; 58 across 9 before the demo tests). |
+| Automated baseline | `pnpm test:run` (94 existing tests across 13 files). |
 
 See [SECURITY.md](../../SECURITY.md) for the vulnerability-reporting process and operational guidance.
