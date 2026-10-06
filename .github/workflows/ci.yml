@@ -60,6 +60,12 @@ jobs:
       - name: Build do playground consumidor
         run: pnpm --dir playground build
 
+      - name: Typecheck da integracao Storybook
+        run: pnpm --dir playground typecheck:storybook
+
+      - name: Build do Storybook consumidor
+        run: pnpm --dir playground build-storybook
+
       - name: Configurar ffmpeg para validar a demo
         shell: bash
         run: command -v ffmpeg >/dev/null || (sudo apt-get update && sudo apt-get install -y ffmpeg)

@@ -1,27 +1,40 @@
 # Next.js App Router guide
 
-`pittiquita/next` provides a Client Component that reads the current App Router pathname and mounts the capture panel only in development by default.
+`pittiquita/next` provides a component that reads the current App Router pathname and mounts the capture panel only in development by default. Import it through a client boundary in the consuming application.
 
 ## 1. Mount the official integration
+
+Keep the root layout as a Server Component and add a small client wrapper. The current package build does not preserve the source file's `'use client'` directive:
+
+```tsx
+// app/PittiquitaDevTools.tsx
+'use client'
+
+import { PittiquitaNextPanel } from 'pittiquita/next'
+
+export function PittiquitaDevTools() {
+  return <PittiquitaNextPanel />
+}
+```
 
 ```tsx
 // app/layout.tsx
 import type { ReactNode } from 'react'
-import { PittiquitaNextPanel } from 'pittiquita/next'
+import { PittiquitaDevTools } from './PittiquitaDevTools'
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
         {children}
-        <PittiquitaNextPanel />
+        <PittiquitaDevTools />
       </body>
     </html>
   )
 }
 ```
 
-`PittiquitaNextPanel` already contains the `'use client'` boundary, reads `usePathname()`, and forwards the route to `FigmaCapturePanel`. Region discovery therefore refreshes after App Router navigation.
+The consumer wrapper establishes the client boundary. `PittiquitaNextPanel` reads `usePathname()` and forwards the route to `FigmaCapturePanel`, refreshing region discovery after App Router navigation. An existing client component can also host the panel; avoid adding another wrapper in that case.
 
 The component returns `null` outside `development` by default. The panel also keeps its localhost runtime guard, so both conditions must pass before UI or the external capture script can appear.
 
@@ -30,6 +43,8 @@ The component returns `null` outside `development` by default. The panel also ke
 The wrapper accepts the same props as `FigmaCapturePanel`, except `pathname`, plus an `enabled` switch:
 
 ```tsx
+'use client'
+
 import { PittiquitaNextPanel } from 'pittiquita/next'
 
 export function DevelopmentTools() {
@@ -69,7 +84,7 @@ Move the actual integration to `PittiquitaNextPanel` in the App Router layout, t
 
 ## App Router considerations
 
-- The official wrapper is a Client Component and imports `next/navigation`; use this entry point only inside an application that already has Next.js installed.
+- The adapter imports `next/navigation`; use this entry point inside a client boundary in an application that already has Next.js installed.
 - `searchKey` can trigger region refreshes when query-driven UI state changes without a pathname change.
 - The first activation replaces an unrelated URL hash, so test applications that own hash navigation.
 - Only `localhost` and `127.0.0.1` are accepted, regardless of the Next.js dev-server bind address.

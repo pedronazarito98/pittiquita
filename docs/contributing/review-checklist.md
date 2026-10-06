@@ -13,7 +13,7 @@ Use this checklist for focused human or independent-agent review. Record concret
 
 - [ ] The user problem and resulting behavior are understandable before implementation details.
 - [ ] Public exports remain compatible or the change is explicitly reviewed as an API change.
-- [ ] The four current entry points remain accurate in `package.json`, `tsup.config.ts`, docs, and package output.
+- [ ] The five current entry points, agent CLI, and bundled skill remain accurate in `package.json`, `tsup.config.ts`, docs, and package output.
 - [ ] Vite behavior distinguishes serve-only injection from manual React usage.
 - [ ] Next.js documentation does not claim that `withPittiquita()` mounts UI.
 - [ ] No text implies an official Figma partnership or that pittiquita performs the final conversion.
@@ -45,7 +45,7 @@ Use this checklist for focused human or independent-agent review. Record concret
 
 ## Documentation and demo
 
-- [ ] English canonical and Portuguese product overviews agree on user-facing behavior.
+- [ ] Product overviews and framework guides agree on user-facing behavior.
 - [ ] Compatibility claims are labeled tested, implemented, or documented.
 - [ ] Code examples use real public exports and correct client boundaries.
 - [ ] Relative links and internal anchors resolve.

@@ -6,6 +6,8 @@ export default defineConfig({
     hooks: 'src/hooks.ts',
     next: 'src/next/plugin.ts',
     vite: 'src/vite/plugin.ts',
+    storybook: 'src/storybook/decorator.tsx',
+    cli: 'src/cli/cli.ts',
   },
   format: ['esm', 'cjs'],
   dts: true,

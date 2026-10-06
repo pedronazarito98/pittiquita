@@ -46,6 +46,8 @@ O workflow interrompe a release quando qualquer gate falha:
 - instalacao congelada do pacote ou playground inconsistente;
 - lint, testes, typecheck ou build com erro;
 - playground consumidor sem build;
+- configuracao ou build estatico do Storybook com erro;
+- executavel `pittiquita agents init` ausente ou incapaz de exibir ajuda;
 - artefatos versionados da demo invalidos;
 - tarball npm inesperado;
 - versao ja existente no npm.
@@ -55,6 +57,10 @@ A publicacao final usa:
 ```bash
 npm publish --access public --provenance
 ```
+
+Para releases que alterem o CLI ou a skill, confira no tarball `dist/cli.js` e os seis arquivos de `skills/pittiquita/`. Instale o pacote empacotado em uma pasta temporaria com `package.json`, execute `pittiquita agents init --dry-run`, instale e repita para verificar que as instrucoes nao sao duplicadas. Nao use um projeto real como destino dessa verificacao.
+
+Depois da publicacao, confirme o numero da versao e o `dist-tag` `latest` pelo registro npm, instale essa versao publicada em um consumidor temporario e confira o export `pittiquita/storybook` e o comando `pittiquita agents init`. Registre o link da execucao de publicacao e crie as notas da release no GitHub.
 
 ## Por que a publicacao nao ocorre em todo merge
 

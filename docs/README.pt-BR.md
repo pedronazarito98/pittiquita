@@ -94,7 +94,8 @@ O escopo do `pittiquita` é intencionalmente específico: preparar um estado Rea
 - Oferece hooks headless para interfaces personalizadas.
 - Oferece um plugin Vite restrito a `serve`, com montagem automática segura durante HMR.
 - Oferece um Client Component sensível à rota para Next.js App Router.
-- Publica ESM, CommonJS e declarações TypeScript em quatro entry points públicos.
+- Oferece um decorator para o Canvas do Storybook React, com região automática por story.
+- Publica ESM, CommonJS e declarações TypeScript em cinco entry points públicos.
 
 ## Instalação
 
@@ -172,26 +173,37 @@ Veja o [guia Vite](./guides/vite.md).
 
 ## Next.js App Router
 
-Use o Client Component sensível à rota exportado por `pittiquita/next`:
+Use o componente sensível à rota exportado por `pittiquita/next` dentro de uma fronteira cliente do app. O build atual do pacote não preserva a diretiva `'use client'` do arquivo-fonte:
+
+```tsx
+// app/PittiquitaDevTools.tsx
+'use client'
+
+import { PittiquitaNextPanel } from 'pittiquita/next'
+
+export function PittiquitaDevTools() {
+  return <PittiquitaNextPanel />
+}
+```
 
 ```tsx
 // app/layout.tsx
 import type { ReactNode } from 'react'
-import { PittiquitaNextPanel } from 'pittiquita/next'
+import { PittiquitaDevTools } from './PittiquitaDevTools'
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR">
       <body>
         {children}
-        <PittiquitaNextPanel />
+        <PittiquitaDevTools />
       </body>
     </html>
   )
 }
 ```
 
-`PittiquitaNextPanel` já contém a fronteira de cliente, lê `usePathname()`, atualiza as regiões após navegações do App Router e retorna `null` fora de desenvolvimento por padrão.
+O wrapper mantém o layout como Server Component. `PittiquitaNextPanel` lê `usePathname()`, atualiza as regiões após navegações do App Router e retorna `null` fora de desenvolvimento por padrão. Se já houver um componente cliente adequado, monte o painel nele.
 
 `withPittiquita()` continua disponível somente como wrapper de identidade depreciado para migração. Ele nunca montou a interface. Mova integrações existentes para `PittiquitaNextPanel` e remova o wrapper legado do `next.config`.
 
@@ -261,8 +273,22 @@ Veja [Regiões e hooks headless](./guides/targets-and-hooks.md).
 | `pittiquita/hooks` | Hooks headless, utilitários de apoio e seus tipos. |
 | `pittiquita/vite` | Adaptador Vite restrito a `serve`, com montagem automática segura em HMR. |
 | `pittiquita/next` | Componente sensível à rota do App Router e wrapper legado de migração. |
+| `pittiquita/storybook` | Decorator `withPittiquita()` para o preview React, com configuração por story. Veja o [guia](./guides/storybook.md). |
 
-Os quatro entry points são compilados como ESM e CommonJS, com declarações TypeScript.
+Os cinco entry points são compilados como ESM e CommonJS, com declarações TypeScript. A integração Storybook está disponível a partir de `0.2.0`.
+
+## Configuração com agentes
+
+A partir de `0.2.0`, o pacote também distribui uma skill com referências para React/Vite, Next.js, Storybook e marcação de regiões. Na pasta do projeto consumidor, depois de instalar ou atualizar Pittiquita:
+
+```bash
+pnpm exec pittiquita agents init --dry-run
+pnpm exec pittiquita agents init
+```
+
+O instalador copia `.agents/skills/pittiquita/` e acrescenta uma referência ao `AGENTS.md` ou ao `AGENTS.override.md` ativo, preservando as instruções existentes. Reexecutar não duplica conteúdo; arquivos personalizados precisam de mesclagem manual. O comando não instala dependências nem altera componentes da aplicação.
+
+Em uma nova sessão do Codex, peça por exemplo: `$pittiquita marque o card de resumo para captura`. Em outros agentes, a descoberta depende do cliente; indique o caminho da skill quando necessário. Veja o [guia para agentes](./guides/agent-setup.md), incluindo a documentação oficial de descoberta e instruções.
 
 ## Arquitetura
 
@@ -272,6 +298,9 @@ Os quatro entry points são compilados como ESM e CommonJS, com declarações Ty
 | `src/react/` | Painel acessível, APIs de alvo, slots de UI e estilos inline. |
 | `src/vite/` | Módulo virtual restrito a `serve` e ciclo de montagem automática. |
 | `src/next/` | Adaptador cliente do App Router e export legado de compatibilidade. |
+| `src/storybook/` | Decorator de preview, marcação do canvas e montagem do painel por portal. |
+| `src/cli/` | Instalação explícita de orientações no projeto consumidor. |
+| `skills/pittiquita/` | Skill distribuída com referências por framework e tarefa. |
 | `playground/` | Consumidor Vite ligado ao pacote para validação no navegador e da demo. |
 | `tests/` | Cobertura Vitest/jsdom de unidades e integrações focadas. |
 | `scripts/` | Automação reproduzível da demonstração visual. |
@@ -298,6 +327,7 @@ Use dados sintéticos ou sanitizados. Não capture segredos de produção, dados
 | React 19 | Baseline testado | Desenvolvimento e testes automatizados usam React 19. |
 | Vite | Adaptador testado | Restrição a `serve`, serialização, montagem idempotente e cleanup de HMR possuem cobertura. |
 | Next.js App Router | Adaptador testado | O wrapper cliente e o contrato sensível à rota possuem testes; ainda falta um fixture completo do framework. |
+| Storybook React | Integração e playground implementados | Canvas local; Docs e builds estáticos desativados por padrão. Exemplo com React/Vite; Webpack ainda precisa de validação de runtime. |
 | SSR | Guards implementados | O acesso ao navegador é adiado ou protegido; a cobertura em fixtures de framework ainda é limitada. |
 | Origens não locais | Guard de runtime testado | O painel não renderiza. Isso não prova remoção dos bytes do bundle. |
 | ESM e CommonJS | Build validado | Todos os entry points produzem os dois formatos e declarações. |

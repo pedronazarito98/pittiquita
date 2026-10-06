@@ -19,7 +19,7 @@ Good proposals explain:
 ## Requirements
 
 - Git.
-- Node.js 20 or newer is recommended for repository development; CI runs Node 20 and publishing runs Node 22.
+- Node.js 22.14 or newer is recommended for repository development; CI runs Node 22 and 24, and publishing runs Node 22.
 - pnpm 10, matching the repository workflows.
 - Chromium through Playwright only when regenerating the visual demo.
 
@@ -50,7 +50,10 @@ The playground consumes the parent package through `link:..`, so build the packa
 | `src/core/` | Browser guards, hooks, capture/region/file utilities, and shared types. |
 | `src/react/` | Panel, target APIs, UI slots, and inline styling. |
 | `src/vite/` | Serve-only Vite plugin. |
-| `src/next/` | Next config entry point; it does not mount UI today. |
+| `src/next/` | Route-aware App Router panel adapter and deprecated identity config wrapper. |
+| `src/storybook/` | React preview decorator with automatic targets and a panel portal. |
+| `src/cli/` | Opt-in installation of consumer agent guidance. |
+| `skills/pittiquita/` | Bundled skill and focused integration references. |
 | `tests/` | Vitest/jsdom tests mirroring `src/`. |
 | `playground/` | Linked Vite consumer used for manual/demo checks. |
 | `scripts/` | Demo automation. |
@@ -71,6 +74,9 @@ Read [Architecture and trust boundaries](./docs/architecture/overview.md) before
 | `pnpm pack:check` | Build plus `npm pack --dry-run`. |
 | `pnpm --dir playground dev` | Manual browser validation. |
 | `pnpm --dir playground build` | Playground production build. |
+| `pnpm --dir playground storybook` | Local Storybook with capture examples. |
+| `pnpm --dir playground typecheck:storybook` | Storybook config and story types. |
+| `pnpm --dir playground build-storybook` | Static Storybook build. |
 | `pnpm demo:capture` | Regenerate the four PNG screenshots only. |
 | `pnpm demo:record` | Regenerate PNG, WebM, and GIF artifacts, then validate them. |
 | `pnpm demo:check` | Decode/probe all versioned artifacts and enforce dimensions, duration, codec, and size budgets. |
@@ -82,17 +88,17 @@ Run the smallest useful checks while iterating and the complete relevant gate be
 1. Create a focused branch from the current `main`.
 2. Map the existing API/tests before editing.
 3. Keep core behavior in `src/core/` and prebuilt UI in `src/react/`.
-4. Preserve the four public entry points unless a reviewed change explicitly alters the package contract.
+4. Preserve the five public entry points and the agent CLI unless a reviewed change explicitly alters the package contract.
 5. Keep browser work behind the appropriate client/local/development guard.
 6. Add or update tests at the same abstraction level as the behavior.
-7. Update English canonical docs and the Portuguese overview when product behavior changes.
+7. Update the Portuguese product overviews and the relevant framework guides when product behavior changes.
 8. Run the relevant validation matrix.
 
 Avoid drive-by refactors, dependency additions without a concrete need, and version changes in ordinary feature/fix PRs.
 
 ## Tests
 
-The integrated reproducible-demo baseline is 82 tests across 11 files. The verified baseline before the two demo test files was 58 across 9. Treat these counts as an inventory, not a target to game.
+The current suite contains 94 tests across 13 files. Treat these counts as an inventory, not a target to game. Storybook browser checks and agent CLI installation checks have also been performed manually; they are not additional unit tests.
 
 - Put utility tests under `tests/core/utils/`.
 - Put hook tests under `tests/core/hooks/`.
@@ -148,9 +154,9 @@ The demo-specific [English](./docs/demo/README.en.md) and [Portuguese](./docs/de
 
 ## Documentation rules
 
-- `README.md` is the canonical English overview.
+- `README.md` is the canonical Portuguese overview.
 - `docs/README.pt-BR.md` is the complete Portuguese overview.
-- `docs/README.en.md` is a stable redirect for historical links.
+- `docs/README.en.md` is an English navigation page for historical links; framework guides remain available in English.
 - Separate **tested**, **implemented**, and **documented** compatibility claims.
 - Use examples that compile against public exports.
 - Do not imply an official Figma partnership or a real import when evidence is a mock.
@@ -192,11 +198,11 @@ A contribution is ready for human review when:
 - public APIs and framework claims match the implementation;
 - tests cover new behavior and all relevant existing tests pass;
 - lint, typecheck, build, and pack/playground gates pass where applicable;
-- English and Portuguese product docs remain consistent for user-facing behavior;
+- product overviews and framework guides remain consistent for user-facing behavior;
 - security/privacy and external-script boundaries are documented;
 - generated media is reproducible, legible, and honestly labeled;
 - local links and examples have been checked;
 - `git diff --check`, a dangerous-change scan, and `git status --short` are clean/understood;
-- no package publication, release tag, credential, or unrelated version bump is included.
+- no credential or unrelated version bump is included; publication and release tags follow an explicitly authorized release task.
 
 Reviewers can use the [maintainer checklist](./docs/contributing/review-checklist.md).
